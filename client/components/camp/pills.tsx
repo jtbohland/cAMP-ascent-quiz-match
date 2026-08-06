@@ -3,34 +3,34 @@
  */
 
 // ── Role colors ──
-const ROLE_STYLES: Record<string, { bg: string; text: string }> = {
-  SDR:           { bg: "bg-purple-100",  text: "text-purple-500" },
-  "Velocity AE": { bg: "bg-violet-100",  text: "text-violet-700" },
-  "Emerging AE": { bg: "bg-cyan-100",    text: "text-cyan-700" },
-  "Majors AE":   { bg: "bg-blue-100",    text: "text-blue-800" },
-  "Strat AE":    { bg: "bg-green-100",   text: "text-green-700" },
-  PSM:           { bg: "bg-orange-100",   text: "text-orange-700" },
-  Renewals:      { bg: "bg-yellow-100",   text: "text-yellow-700" },
-  Admin:         { bg: "bg-gray-100",     text: "text-gray-600" },
+const ROLE_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  "Velocity AE": { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
+  "Emerging AE": { bg: "bg-cyan-50",    text: "text-cyan-700",    border: "border-cyan-200" },
+  "Majors AE":   { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
+  "Strat AE":    { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  SDR:           { bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-200" },
+  PSM:           { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200" },
+  Renewals:      { bg: "bg-yellow-50",  text: "text-yellow-700",  border: "border-yellow-300" },
+  Admin:         { bg: "bg-gray-100",   text: "text-gray-600",    border: "border-gray-200" },
 };
 
-const DEFAULT_ROLE_STYLE = { bg: "bg-gray-100", text: "text-gray-600" };
+const DEFAULT_ROLE_STYLE = { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" };
 
 // ── Region colors ──
-const REGION_STYLES: Record<string, { bg: string; text: string; emoji: string }> = {
-  NAMER: { bg: "bg-blue-100",   text: "text-blue-700",   emoji: "🌎" },
-  EMEA:  { bg: "bg-red-100",    text: "text-red-700",    emoji: "🌍" },
-  AAPJ:  { bg: "bg-yellow-100", text: "text-yellow-700", emoji: "🌏" },
+const REGION_STYLES: Record<string, { bg: string; text: string; border: string; emoji: string }> = {
+  NAMER: { bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-200",   emoji: "🌎" },
+  EMEA:  { bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200",    emoji: "🌍" },
+  AAPJ:  { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-300", emoji: "🌏" },
 };
 
-const DEFAULT_REGION_STYLE = { bg: "bg-gray-100", text: "text-gray-600", emoji: "🌐" };
+const DEFAULT_REGION_STYLE = { bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200", emoji: "🌐" };
 
 // ── Components ──
 
 export function RolePill({ role }: { role: string }) {
   const style = ROLE_STYLES[role] ?? DEFAULT_ROLE_STYLE;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+    <span className={`inline-flex items-center whitespace-nowrap px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${style.bg} ${style.text} ${style.border}`}>
       {role}
     </span>
   );
@@ -39,7 +39,7 @@ export function RolePill({ role }: { role: string }) {
 export function RegionPill({ region }: { region: string }) {
   const style = REGION_STYLES[region] ?? DEFAULT_REGION_STYLE;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+    <span className={`inline-flex items-center gap-0.5 whitespace-nowrap px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${style.bg} ${style.text} ${style.border}`}>
       {style.emoji} {region}
     </span>
   );
