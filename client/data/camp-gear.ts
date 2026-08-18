@@ -53,6 +53,7 @@ export const CAMP_GEAR: Record<string, CampResource[]> = {
   ],
   day3: [
     { type: "slides", emoji: "📓", label: "GTM Launch Pad Deck", url: "https://docs.google.com/presentation/d/1tm_q5TJVRNYRrIB6wc5AGSmqTWyFDi3Na1EwO8tp80M/edit#slide=id.p1" },
+    { type: "slides", emoji: "📓", label: "GTM Pod Tower Deck", url: "https://docs.google.com/presentation/d/1u1xTc696f36TSvKi7xJCvA5eDw043m0NHpyYCtkfnuQ/edit?slide=id.g3eff4aad3ea_0_283#slide=id.g3eff4aad3ea_0_283" },
     { type: "dashboard", emoji: "📊", label: "GTM Launch Pad (SFDC Dashboard)", url: "https://amplitude.lightning.force.com/analytics/dashboard/0FKUw0000000gLpOAI" },
     { type: "campClips", emoji: "🌲🍿", label: "1h", url: "https://app.superblocks.com/code-mode/applications/fbc1d457-949d-4756-9cd4-ca723f3cb5ac" },
   ],
