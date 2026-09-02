@@ -2,7 +2,7 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-// XP Point Values
+// XP Point Values (same for all paths — structural/scoring rules are universal)
 const XP = {
   START_QUIZ: 1,
   PASS_ATTEMPT_1: 5,
@@ -10,9 +10,9 @@ const XP = {
   REVIEW_QUIZ: 2,
   RETAKE_ATTEMPT: 1,
   // Milestones
-  MILESTONE_5_FIRST_PASS: 10,
-  MILESTONE_10_FIRST_PASS: 15,
-  MILESTONE_15_FIRST_PASS: 20,
+  MILESTONE_TIER_1: 10,
+  MILESTONE_TIER_2: 15,
+  MILESTONE_TIER_3: 20,
   REDEMPTION_ARC: 10,
   // Performance Bonuses
   ACE_UP_THE_SLEEVE: 15,
@@ -23,26 +23,84 @@ const XP = {
   SAME_DAY_DOUBLE: 5,
 };
 
-// Tier thresholds
-const TIERS = [
-  { min: 0, max: 75, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
-  { min: 76, max: 150, name: "Trailblazer", emoji: "\u{1F97E}" },
-  { min: 151, max: 234, name: "Summit Seeker", emoji: "\u{1F9D7}\u{1F3FC}" },
-  { min: 235, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
-] as const;
+// ─── Path definitions (server-side mirror of client/data/paths.ts) ───
+type PathId = "ae" | "sdr" | "promo";
 
-const PINNACLE_THRESHOLD = 235;
+interface ServerPathConfig {
+  id: PathId;
+  quizOrder: string[];
+  weekGroups: Record<string, string[]>;
+  tiers: { min: number; max: number; name: string; emoji: string }[];
+  milestones: number[]; // First-attempt-pass thresholds
+  pinnacleThreshold: number;
+  maxXp: number;
+}
 
-// Week groupings
-const WEEK_QUIZZES: Record<string, string[]> = {
-  "Week 2": ["day1", "day2", "day3", "day4", "day5"],
-  "Week 3": ["day6", "day7", "day8", "day9", "day10"],
-  "Week 4": ["day11", "day12", "day13", "day14", "day15"],
+const PATHS: Record<PathId, ServerPathConfig> = {
+  ae: {
+    id: "ae",
+    quizOrder: ["day1","day2","day3","day4","day5","day6","day7","day8","day9","day10","day11","day12","day13","day14","day15"],
+    weekGroups: {
+      "Week 2": ["day1","day2","day3","day4","day5"],
+      "Week 3": ["day6","day7","day8","day9","day10"],
+      "Week 4": ["day11","day12","day13","day14","day15"],
+    },
+    tiers: [
+      { min: 0, max: 75, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+      { min: 76, max: 150, name: "Trailblazer", emoji: "\u{1F97E}" },
+      { min: 151, max: 234, name: "Summit Seeker", emoji: "\u{1F9D7}\u{1F3FC}" },
+      { min: 235, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
+    ],
+    milestones: [5, 10, 15],
+    pinnacleThreshold: 235,
+    maxXp: 620,
+  },
+  sdr: {
+    id: "sdr",
+    quizOrder: ["day1","day2","day3","day4","sdr-cold-calling","day6","day7","day8","day9","day10","day12"],
+    weekGroups: {
+      "Week 2": ["day1","day2","day3","day4","sdr-cold-calling"],
+      "Week 3": ["day6","day7","day8","day9","day10"],
+      "Week 4": ["day12"],
+    },
+    tiers: [
+      { min: 0, max: 55, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+      { min: 56, max: 110, name: "Trailblazer", emoji: "\u{1F97E}" },
+      { min: 111, max: 171, name: "Summit Seeker", emoji: "\u{1F9D7}\u{1F3FC}" },
+      { min: 172, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
+    ],
+    milestones: [4, 7, 11],
+    pinnacleThreshold: 172,
+    maxXp: 466,
+  },
+  promo: {
+    id: "promo",
+    quizOrder: ["day5","day9","day10","day11","day13","day14","day15"],
+    weekGroups: {
+      "Week 2": ["day5","day9","day10","day11","day13"],
+      "Week 3": ["day14","day15"],
+    },
+    tiers: [
+      { min: 0, max: 35, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+      { min: 36, max: 71, name: "Trailblazer", emoji: "\u{1F97E}" },
+      { min: 72, max: 110, name: "Summit Seeker", emoji: "\u{1F9D7}\u{1F3FC}" },
+      { min: 111, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
+    ],
+    milestones: [2, 5, 7],
+    pinnacleThreshold: 111,
+    maxXp: 314,
+  },
 };
+
+function getRolePathId(role: string): PathId {
+  if (role === "SDR") return "sdr";
+  if (role === "SDR \u2192 Velocity AE Promo") return "promo";
+  return "ae";
+}
 
 export default api({
   name: "CampGetUserXp",
-  description: "Calculates a user's total XP, tier, rank, and earned bonuses",
+  description: "Calculates a user's total XP, tier, rank, and earned bonuses (path-aware)",
   integrations: {
     db: postgres(APPS_DB),
   },
@@ -61,6 +119,10 @@ export default api({
     totalUsers: z.number(),
     quizzesCompleted: z.number(),
     pinnacleThreshold: z.number(),
+    pathId: z.string(),
+    pathLabel: z.string(),
+    pathQuizCount: z.number(),
+    maxXp: z.number(),
     breakdown: z.object({
       core: z.number(),
       milestones: z.number(),
@@ -79,12 +141,25 @@ export default api({
       earned: z.boolean(),
       xp: z.number(),
     })),
-    // For the surprise bonus visibility
     hasFailedAny: z.boolean(),
     redemptionArcVisible: z.boolean(),
     redemptionArcEarned: z.boolean(),
   }),
   async run(ctx, input) {
+    // Look up the user's role to determine their path
+    const viewerRows = await ctx.integrations.db.query(
+      `SELECT user_role FROM camp_viewers WHERE LOWER(user_email) = LOWER($1) LIMIT 1`,
+      z.object({ user_role: z.string() }),
+      [input.userEmail],
+      { label: "Get user role for path" }
+    );
+    const userRole = viewerRows[0]?.user_role ?? "";
+    const pathId = getRolePathId(userRole);
+    const path = PATHS[pathId];
+
+    // Path labels for output
+    const pathLabels: Record<PathId, string> = { ae: "AE Path", sdr: "SDR Path", promo: "Promo Path" };
+
     // Get all attempts for this user
     const attempts = await ctx.integrations.db.query(
       `SELECT id, quiz_id, attempt_number, score, total_questions, passed, time_spent_seconds, created_at::text
@@ -118,41 +193,39 @@ export default api({
       { label: "Get review counts" }
     );
 
+    // Only count XP for quizzes in the user's path
+    const pathQuizSet = new Set(path.quizOrder);
+
     // ========== CORE XP CALCULATION ==========
     let coreXp = 0;
     const startedQuizzes = new Set<string>();
-    const firstAttemptPassed = new Set<string>(); // Passed on attempt 1
-    const secondAttemptPassed = new Set<string>(); // Passed on attempt 2
-    const retakeAttempts = new Set<string>(); // Track retake attempts (3, 4)
-    const quizzesCompleted = new Set<string>(); // Any quiz with 2+ attempts or passed
-
-    // Track first attempt results per quiz for Clean Sweep
+    const firstAttemptPassed = new Set<string>();
+    const secondAttemptPassed = new Set<string>();
+    const retakeAttempts = new Set<string>();
+    const quizzesCompleted = new Set<string>();
     const firstAttemptResults: Record<string, boolean> = {};
 
     for (const a of attempts) {
-      // +1 XP for starting a quiz (first attempt only)
+      if (!pathQuizSet.has(a.quiz_id)) continue; // Skip quizzes not in user's path
+
       if (!startedQuizzes.has(a.quiz_id)) {
         startedQuizzes.add(a.quiz_id);
         coreXp += XP.START_QUIZ;
       }
 
-      // Track first attempt result
       if (a.attempt_number === 1) {
         firstAttemptResults[a.quiz_id] = a.passed;
       }
 
-      // Pass on attempt 1
       if (a.attempt_number === 1 && a.passed) {
         firstAttemptPassed.add(a.quiz_id);
         coreXp += XP.PASS_ATTEMPT_1;
       }
-      // Pass on attempt 2
       if (a.attempt_number === 2 && a.passed) {
         secondAttemptPassed.add(a.quiz_id);
         coreXp += XP.PASS_ATTEMPT_2;
       }
 
-      // Retake attempts (3 and 4) — +1 each, max 2 per quiz
       if (a.attempt_number >= 3) {
         const retakeKey = `${a.quiz_id}_${a.attempt_number}`;
         if (!retakeAttempts.has(retakeKey)) {
@@ -161,43 +234,40 @@ export default api({
         }
       }
 
-      // Track completion
       if (a.attempt_number >= 2 || a.passed) {
         quizzesCompleted.add(a.quiz_id);
       }
     }
 
-    // Review XP — +2 per quiz reviewed (cap at 1 per quiz)
+    // Review XP — only for path quizzes
     const reviewedQuizzes = new Set<string>();
     for (const r of reviewRows) {
+      if (!pathQuizSet.has(r.quiz_id)) continue;
       if (!reviewedQuizzes.has(r.quiz_id)) {
         reviewedQuizzes.add(r.quiz_id);
         coreXp += XP.REVIEW_QUIZ;
       }
     }
 
-    // ========== MILESTONE XP ==========
+    // ========== MILESTONE XP (path-aware thresholds) ==========
     let milestoneXp = 0;
     const milestonesList: { id: string; name: string; earned: boolean; xp: number }[] = [];
-
     const firstPassCount = firstAttemptPassed.size;
 
-    // 5 first-attempt passes
-    const m5 = firstPassCount >= 5;
-    if (m5) milestoneXp += XP.MILESTONE_5_FIRST_PASS;
-    milestonesList.push({ id: "m5", name: "5 First-Attempt Passes", earned: m5, xp: XP.MILESTONE_5_FIRST_PASS });
+    const milestoneXpValues = [XP.MILESTONE_TIER_1, XP.MILESTONE_TIER_2, XP.MILESTONE_TIER_3];
+    path.milestones.forEach((threshold, idx) => {
+      const xpValue = milestoneXpValues[idx] ?? 0;
+      const earned = firstPassCount >= threshold;
+      if (earned) milestoneXp += xpValue;
+      milestonesList.push({
+        id: `m${threshold}`,
+        name: `${threshold} First-Attempt Passes`,
+        earned,
+        xp: xpValue,
+      });
+    });
 
-    // 10 first-attempt passes
-    const m10 = firstPassCount >= 10;
-    if (m10) milestoneXp += XP.MILESTONE_10_FIRST_PASS;
-    milestonesList.push({ id: "m10", name: "10 First-Attempt Passes", earned: m10, xp: XP.MILESTONE_10_FIRST_PASS });
-
-    // 15 first-attempt passes (perfect run)
-    const m15 = firstPassCount >= 15;
-    if (m15) milestoneXp += XP.MILESTONE_15_FIRST_PASS;
-    milestonesList.push({ id: "m15", name: "15 First-Attempt Passes", earned: m15, xp: XP.MILESTONE_15_FIRST_PASS });
-
-    // Redemption Arc — failed at least one quiz on attempt 1, then retook and eventually passed ALL failed quizzes
+    // Redemption Arc
     const hasFailedAny = Object.values(firstAttemptResults).some((r) => r === false);
     const failedQuizIds = Object.entries(firstAttemptResults)
       .filter(([, passed]) => !passed)
@@ -216,20 +286,18 @@ export default api({
       xp: XP.REDEMPTION_ARC,
     });
 
-    // ========== PERFORMANCE BONUSES ==========
+    // ========== PERFORMANCE BONUSES (only for path quizzes) ==========
     let bonusXp = 0;
     const earnedBonuses: { id: string; name: string; emoji: string; xp: number; count: number }[] = [];
 
-    // ♠️ Ace Up the Sleeve — 10/10 on attempt 1 in ≤10 min
+    // Filter attempts to path quizzes only
+    const pathAttempts = attempts.filter((a) => pathQuizSet.has(a.quiz_id));
+
+    // Ace Up the Sleeve
     let aceCount = 0;
-    for (const a of attempts) {
-      if (
-        a.attempt_number === 1 &&
-        a.passed &&
-        a.score === a.total_questions &&
-        a.time_spent_seconds != null &&
-        a.time_spent_seconds <= 600
-      ) {
+    for (const a of pathAttempts) {
+      if (a.attempt_number === 1 && a.passed && a.score === a.total_questions &&
+          a.time_spent_seconds != null && a.time_spent_seconds <= 600) {
         aceCount++;
       }
     }
@@ -238,15 +306,11 @@ export default api({
       earnedBonuses.push({ id: "ace", name: "Ace", emoji: "\uD83D\uDCAF", xp: XP.ACE_UP_THE_SLEEVE, count: aceCount });
     }
 
-    // ⚡ Speed Bonus — pass attempt 1 in under 10 min (but NOT if also Ace — they stack)
+    // Speed Bonus
     let speedCount = 0;
-    for (const a of attempts) {
-      if (
-        a.attempt_number === 1 &&
-        a.passed &&
-        a.time_spent_seconds != null &&
-        a.time_spent_seconds <= 600
-      ) {
+    for (const a of pathAttempts) {
+      if (a.attempt_number === 1 && a.passed &&
+          a.time_spent_seconds != null && a.time_spent_seconds <= 600) {
         speedCount++;
       }
     }
@@ -255,19 +319,16 @@ export default api({
       earnedBonuses.push({ id: "speed", name: "Speed Bonus", emoji: "\u26A1", xp: XP.SPEED_BONUS, count: speedCount });
     }
 
-    // 🔥 Hot Streak — every 3 consecutive first-attempt passes
-    // Build ordered list of quizzes by first attempt date
-    const firstAttempts = attempts
+    // Hot Streak — 3 consecutive first-attempt passes (path order)
+    const firstAttemptsSorted = pathAttempts
       .filter((a) => a.attempt_number === 1)
       .sort((a, b) => a.created_at.localeCompare(b.created_at));
     let streak = 0;
     let hotStreakCount = 0;
-    for (const a of firstAttempts) {
+    for (const a of firstAttemptsSorted) {
       if (a.passed) {
         streak++;
-        if (streak >= 3 && streak % 3 === 0) {
-          hotStreakCount++;
-        }
+        if (streak >= 3 && streak % 3 === 0) hotStreakCount++;
       } else {
         streak = 0;
       }
@@ -277,9 +338,9 @@ export default api({
       earnedBonuses.push({ id: "hotstreak", name: "Hot Streak", emoji: "\uD83D\uDD25", xp: XP.HOT_STREAK, count: hotStreakCount });
     }
 
-    // 🧹 Clean Sweep — all 5 quizzes in a week passed on first attempt
+    // Clean Sweep — all quizzes in a week group passed on first attempt (path-specific week groups)
     let cleanSweepCount = 0;
-    for (const [, quizIds] of Object.entries(WEEK_QUIZZES)) {
+    for (const [, quizIds] of Object.entries(path.weekGroups)) {
       const allFirstAttemptPass = quizIds.every((qid) => firstAttemptResults[qid] === true);
       if (allFirstAttemptPass) cleanSweepCount++;
     }
@@ -288,14 +349,10 @@ export default api({
       earnedBonuses.push({ id: "cleansweep", name: "Clean Sweep", emoji: "\uD83E\uDDF9", xp: XP.CLEAN_SWEEP, count: cleanSweepCount });
     }
 
-    // 💪 The Comeback — fail attempt 1, then score 10/10 on attempt 2
+    // The Comeback
     let comebackCount = 0;
-    for (const a of attempts) {
-      if (
-        a.attempt_number === 2 &&
-        a.score === a.total_questions &&
-        firstAttemptResults[a.quiz_id] === false
-      ) {
+    for (const a of pathAttempts) {
+      if (a.attempt_number === 2 && a.score === a.total_questions && firstAttemptResults[a.quiz_id] === false) {
         comebackCount++;
       }
     }
@@ -304,13 +361,12 @@ export default api({
       earnedBonuses.push({ id: "comeback", name: "The Comeback", emoji: "\uD83D\uDCAA", xp: XP.THE_COMEBACK, count: comebackCount });
     }
 
-    // 📅 Same-Day Double — complete 2 quizzes in the same calendar day
+    // Same-Day Double
     const dayMap = new Map<string, number>();
-    for (const a of attempts) {
-      const day = a.created_at.substring(0, 10); // YYYY-MM-DD
+    for (const a of pathAttempts) {
+      const day = a.created_at.substring(0, 10);
       dayMap.set(day, (dayMap.get(day) ?? 0) + 1);
     }
-    // Count unique days with 2+ completions — but only count once per day
     let sameDayCount = 0;
     for (const [, count] of dayMap) {
       if (count >= 2) sameDayCount++;
@@ -323,24 +379,18 @@ export default api({
     // ========== TOTAL ==========
     const totalXp = coreXp + milestoneXp + bonusXp;
 
-    // Determine tier
-    const tier = TIERS.find((t) => totalXp >= t.min && totalXp <= t.max) ?? TIERS[0];
+    // Determine tier using path-specific thresholds
+    const tier = path.tiers.find((t) => totalXp >= t.min && totalXp <= t.max) ?? path.tiers[0];
 
-    // Get rank (how many users have more XP)
+    // Get total users for ranking
     const rankResult = await ctx.integrations.db.query(
-      `WITH user_xp AS (
-        SELECT user_email, COUNT(DISTINCT quiz_id)::int AS quizzes
-        FROM camp_quiz_attempts
-        GROUP BY user_email
-      )
-      SELECT COUNT(DISTINCT user_email)::int AS total_users
-      FROM camp_quiz_attempts`,
+      `SELECT COUNT(DISTINCT user_email)::int AS total_users
+       FROM camp_quiz_attempts`,
       z.object({ total_users: z.number() }),
       undefined,
       { label: "Get total users for ranking" }
     );
     const totalUsers = rankResult[0]?.total_users ?? 1;
-    // Simplified rank — will be computed properly on leaderboard
     const rank = 1; // Placeholder — real rank computed in leaderboard API
 
     return {
@@ -349,7 +399,11 @@ export default api({
       rank,
       totalUsers,
       quizzesCompleted: quizzesCompleted.size,
-      pinnacleThreshold: PINNACLE_THRESHOLD,
+      pinnacleThreshold: path.pinnacleThreshold,
+      pathId: path.id,
+      pathLabel: pathLabels[pathId],
+      pathQuizCount: path.quizOrder.length,
+      maxXp: path.maxXp,
       breakdown: {
         core: coreXp,
         milestones: milestoneXp,

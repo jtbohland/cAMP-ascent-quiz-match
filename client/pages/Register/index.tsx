@@ -6,6 +6,7 @@ import WelcomeModal from "@/components/camp/WelcomeModal.js";
 const ROLES = [
   "SDR",
   "Velocity AE",
+  "SDR \u2192 Velocity AE Promo",
   "Emerging AE",
   "Majors AE",
   "Strat AE",

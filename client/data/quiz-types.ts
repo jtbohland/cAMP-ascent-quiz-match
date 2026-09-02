@@ -19,11 +19,14 @@ export type Quiz = {
   title: string;
   week: string;
   questions: Question[];
+  /** Placeholder quizzes show as "Coming Soon" and cannot be started */
+  isPlaceholder?: boolean;
 };
 
 export const ROLES = [
   "SDR",
   "Velocity AE",
+  "SDR \u2192 Velocity AE Promo",
   "Emerging Ent AE",
   "Enterprise AE",
   "Strategic AE",

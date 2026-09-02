@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { QUIZZES } from "@/data/quizzes/index.js";
+import { ALL_PATHS, getRolePathId, type PathId } from "@/data/paths.js";
 import CampersTable from "@/components/camp/CampersTable.js";
 import LeaderboardMini from "@/components/camp/LeaderboardMini.js";
 
@@ -76,9 +78,100 @@ function AnalyticsDashboard({
   lbLoading: boolean;
 }) {
   const { summary, byQuiz, byRole, mostMissed } = data;
+  const [pathFilter, setPathFilter] = useState<PathId | "all">("all");
+
+  // Filter byRole and byQuiz based on selected path
+  const filteredByRole = pathFilter === "all"
+    ? byRole ?? []
+    : (byRole ?? []).filter((row: any) => getRolePathId(row.user_role) === pathFilter);
+
+  const filteredByQuiz = pathFilter === "all"
+    ? byQuiz ?? []
+    : (() => {
+        const pathConfig = ALL_PATHS.find((p) => p.id === pathFilter);
+        const pathQuizSet = new Set(pathConfig?.quizOrder ?? []);
+        return (byQuiz ?? []).filter((row: any) => pathQuizSet.has(row.quiz_id));
+      })();
+
+  // Cross-path comparison data
+  const crossPathData = ALL_PATHS.map((p) => {
+    const pathRoles = (byRole ?? []).filter((row: any) => getRolePathId(row.user_role) === p.id);
+    const totalAttempts = pathRoles.reduce((sum: number, r: any) => sum + r.attempts, 0);
+    const avgScore = pathRoles.length > 0
+      ? Math.round(pathRoles.reduce((sum: number, r: any) => sum + r.avg_score * r.attempts, 0) / (totalAttempts || 1) * 10) / 10
+      : 0;
+    const avgPassRate = pathRoles.length > 0
+      ? Math.round(pathRoles.reduce((sum: number, r: any) => sum + r.pass_rate * r.attempts, 0) / (totalAttempts || 1) * 10) / 10
+      : 0;
+    return { ...p, totalAttempts, avgScore, avgPassRate, roleCount: pathRoles.length };
+  }).filter((p) => p.totalAttempts > 0);
 
   return (
     <div className="space-y-10">
+      {/* ── 0. Path Filter ── */}
+      <section>
+        <SectionHeading emoji="🛤️" title="Filter by Path" />
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={() => setPathFilter("all")}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              pathFilter === "all"
+                ? "bg-slate-800 text-white"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            All Paths
+          </button>
+          {ALL_PATHS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPathFilter(p.id)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                pathFilter === p.id
+                  ? "bg-amber-700 text-white"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {p.emoji} {p.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Cross-Path Comparison ── */}
+      {crossPathData.length > 1 && pathFilter === "all" && (
+        <section>
+          <SectionHeading emoji="📊" title="Cross-Path Comparison" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {crossPathData.map((p) => (
+              <div key={p.id} className="bg-white rounded-xl border border-slate-200 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">{p.emoji}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{p.label}</p>
+                    <p className="text-xs text-slate-500">{p.quizOrder.length} quizzes</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">{p.totalAttempts}</p>
+                    <p className="text-[10px] text-slate-500">Attempts</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">{p.avgScore}%</p>
+                    <p className="text-[10px] text-slate-500">Avg Score</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">{p.avgPassRate}%</p>
+                    <p className="text-[10px] text-slate-500">Pass Rate</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── 1. Overall Summary ── */}
       <section>
         <SectionHeading emoji="⛺" title="Overall Summary" />
@@ -96,14 +189,14 @@ function AnalyticsDashboard({
       <section>
         <SectionHeading emoji="🧗" title="Performance by Role" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {(byRole ?? []).map((row: any) => (
+          {(filteredByRole).map((row: any) => (
             <div key={row.user_role} className="bg-white rounded-xl border border-slate-200 p-4">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{row.user_role}</p>
               <p className="text-2xl font-bold text-slate-900">{row.avg_score}%</p>
               <p className="text-xs text-slate-500 mt-1">{row.attempts} attempt{row.attempts !== 1 ? "s" : ""} • {row.pass_rate}% pass rate</p>
             </div>
           ))}
-          {(!byRole || byRole.length === 0) && (
+          {(filteredByRole.length === 0) && (
             <div className="col-span-full bg-white rounded-xl border border-slate-200 p-6 text-center text-sm text-slate-500">
               No role data available yet.
             </div>
@@ -155,7 +248,7 @@ function AnalyticsDashboard({
               </tr>
             </thead>
             <tbody>
-              {(byQuiz ?? []).map((row: any) => {
+              {(filteredByQuiz).map((row: any) => {
                 const quizMeta = QUIZZES.find((q) => q.id === row.quiz_id);
                 return (
                   <tr key={row.quiz_id} className="border-b border-slate-50">
@@ -178,7 +271,7 @@ function AnalyticsDashboard({
                   </tr>
                 );
               })}
-              {(!byQuiz || byQuiz.length === 0) && (
+              {(!filteredByQuiz || filteredByQuiz.length === 0) && (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     No quiz data yet.
