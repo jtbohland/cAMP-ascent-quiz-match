@@ -1,16 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
+import { ALL_PATHS, type PathId } from "@/data/paths.js";
 
-// Tier definitions
-const TIERS = [
-  { emoji: "🏕️", name: "Base Camper", range: "0 – 75 XP", description: "Just getting started on the trail" },
-  { emoji: "🥾", name: "Trailblazer", range: "76 – 150 XP", description: "Building momentum and confidence" },
-  { emoji: "🧗🏼", name: "Summit Seeker", range: "151 – 234 XP", description: "Pushing toward mastery" },
-  { emoji: "🏔️✨", name: "Pinnacle Achiever", range: "235+ XP", description: "The peak. You've conquered the Ascent." },
-];
-
-// Base XP actions
+// Base XP actions (universal)
 const BASE_ACTIONS = [
   { action: "Start a quiz", xp: "+1", note: "First attempt on any quiz" },
   { action: "Pass on Attempt 1", xp: "+5", note: "Nail it on the first try" },
@@ -19,22 +13,14 @@ const BASE_ACTIONS = [
   { action: "Retake attempt (3rd or 4th)", xp: "+1", note: "Persistence pays off" },
 ];
 
-// Performance bonuses
+// Performance bonuses (universal)
 const BONUSES = [
   { id: "ace", emoji: "💯", name: "Ace", xp: "+15", condition: "10/10 on Attempt 1 in under 10 min" },
   { id: "speed", emoji: "⚡", name: "Speed Bonus", xp: "+7", condition: "Pass Attempt 1 in under 10 min" },
   { id: "hotstreak", emoji: "🔥", name: "Hot Streak", xp: "+12", condition: "3 consecutive first-attempt passes" },
-  { id: "cleansweep", emoji: "🧹", name: "Clean Sweep", xp: "+10", condition: "All 5 quizzes in a week passed on Attempt 1" },
+  { id: "cleansweep", emoji: "🧹", name: "Clean Sweep", xp: "+10", condition: "All quizzes in a week group passed on Attempt 1" },
   { id: "comeback", emoji: "💪", name: "The Comeback", xp: "+10", condition: "Fail Attempt 1, then score 10/10 on Attempt 2" },
   { id: "sameday", emoji: "📅", name: "Same-Day Double", xp: "+5", condition: "Complete 2 quizzes in one day" },
-];
-
-// Milestones
-const MILESTONES = [
-  { id: "m5", emoji: "⭐", name: "5 First-Attempt Passes", xp: "+10" },
-  { id: "m10", emoji: "⭐⭐", name: "10 First-Attempt Passes", xp: "+15" },
-  { id: "m15", emoji: "⭐⭐⭐", name: "15 First-Attempt Passes", xp: "+20" },
-  { id: "surprise", emoji: "🎉", name: "???", xp: "????" },
 ];
 
 export default function XpExplainerPage() {
@@ -48,14 +34,32 @@ export default function XpExplainerPage() {
     { enabled: !!userEmail }
   );
 
-  // Determine which bonuses/milestones the user has earned
+  // The user's actual path from the XP API
+  const userPathId = (xpData?.pathId ?? "ae") as PathId;
+
+  // Tab state for path switcher
+  const [selectedPathId, setSelectedPathId] = useState<PathId | null>(null);
+  // Default to the user's path once loaded
+  const activePathId = selectedPathId ?? userPathId;
+  const activePath = ALL_PATHS.find((p) => p.id === activePathId) ?? ALL_PATHS[0];
+
+  // Earned bonuses/milestones
   const earnedBonusIds = new Set(xpData?.earnedBonuses?.map((b) => b.id) ?? []);
   const earnedMilestoneIds = new Set(
     xpData?.milestones?.filter((m) => m.earned).map((m) => m.id) ?? []
   );
-
-  // Check if redemption arc was earned (maps to "surprise" milestone)
   const redemptionEarned = xpData?.redemptionArcEarned ?? false;
+
+  // Build milestone list for the selected path
+  const milestoneXpValues = [10, 15, 20];
+  const pathMilestones = activePath.milestones.map((threshold, idx) => ({
+    id: `m${threshold}`,
+    emoji: idx === 0 ? "⭐" : idx === 1 ? "⭐⭐" : "⭐⭐⭐",
+    name: `${threshold} First-Attempt Passes`,
+    xp: `+${milestoneXpValues[idx]}`,
+  }));
+  // Add surprise milestone
+  pathMilestones.push({ id: "surprise", emoji: "🎉", name: "???", xp: "????" });
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -86,9 +90,44 @@ export default function XpExplainerPage() {
           </p>
         </section>
 
-        {/* Section 2: Tiers */}
+        {/* Path Tabs */}
         <section>
-          <h2 className="text-lg font-bold text-slate-900 mb-3">🪜 Tiers</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-3">🛤️ Learning Paths</h2>
+          <p className="text-xs text-slate-500 mb-3">
+            Different roles have different paths. Tiers and milestones scale proportionally so every path has a fair shot at Pinnacle.
+          </p>
+          <div className="flex gap-2 mb-4">
+            {ALL_PATHS.map((p) => {
+              const isActive = p.id === activePathId;
+              const isUserPath = p.id === userPathId;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPathId(p.id)}
+                  className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-amber-700 text-white shadow-sm"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {p.emoji} {p.label} ({p.quizOrder.length})
+                  {isUserPath && (
+                    <span className="ml-1.5 text-[10px] bg-white/20 text-white px-1 py-0.5 rounded font-semibold">
+                      {isActive ? "Your path" : ""}
+                    </span>
+                  )}
+                  {isUserPath && !isActive && (
+                    <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-indigo-500 rounded-full border-2 border-orange-50" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 2: Tiers (path-specific) */}
+        <section>
+          <h2 className="text-lg font-bold text-slate-900 mb-3">🪜 Tiers — {activePath.label}</h2>
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -99,8 +138,15 @@ export default function XpExplainerPage() {
                 </tr>
               </thead>
               <tbody>
-                {TIERS.map((tier, i) => {
-                  const isCurrentTier = xpData?.tier?.name === tier.name;
+                {activePath.tiers.map((tier) => {
+                  const isCurrentTier = activePathId === userPathId && xpData?.tier?.name === tier.name;
+                  const rangeStr = tier.max >= 9999 ? `${tier.min}+ XP` : `${tier.min} – ${tier.max} XP`;
+                  const descriptions: Record<string, string> = {
+                    "Base Camper": "Just getting started on the trail",
+                    "Trailblazer": "Building momentum and confidence",
+                    "Summit Seeker": "Pushing toward mastery",
+                    "Pinnacle Achiever": "The peak. You've conquered the Ascent.",
+                  };
                   return (
                     <tr
                       key={tier.name}
@@ -113,8 +159,8 @@ export default function XpExplainerPage() {
                           <span className="ml-2 text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-medium">You</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{tier.range}</td>
-                      <td className="px-4 py-3 text-slate-500 hidden sm:table-cell">{tier.description}</td>
+                      <td className="px-4 py-3 text-slate-600">{rangeStr}</td>
+                      <td className="px-4 py-3 text-slate-500 hidden sm:table-cell">{descriptions[tier.name] ?? ""}</td>
                     </tr>
                   );
                 })}
@@ -165,7 +211,7 @@ export default function XpExplainerPage() {
               </thead>
               <tbody>
                 {BONUSES.map((bonus) => {
-                  const earned = earnedBonusIds.has(bonus.id);
+                  const earned = activePathId === userPathId && earnedBonusIds.has(bonus.id);
                   return (
                     <tr
                       key={bonus.id}
@@ -194,9 +240,9 @@ export default function XpExplainerPage() {
           </div>
         </section>
 
-        {/* Section 5: Milestone Bonuses */}
+        {/* Section 5: Milestone Bonuses (path-specific) */}
         <section>
-          <h2 className="text-lg font-bold text-slate-900 mb-2">🏆 Milestone Bonuses</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">🏆 Milestone Bonuses — {activePath.label}</h2>
           <p className="text-xs text-slate-500 mb-3">
             One surprise bonus is waiting. You'll know it when you find it. 🏔️
           </p>
@@ -209,10 +255,11 @@ export default function XpExplainerPage() {
                 </tr>
               </thead>
               <tbody>
-                {MILESTONES.map((milestone) => {
+                {pathMilestones.map((milestone) => {
                   const isSurprise = milestone.id === "surprise";
-                  // Never reveal the surprise — even if earned
-                  const earned = isSurprise ? false : earnedMilestoneIds.has(milestone.id) || (milestone.id === "redemption" && redemptionEarned);
+                  const earned = activePathId === userPathId && !isSurprise && (
+                    earnedMilestoneIds.has(milestone.id) || (milestone.id === "redemption" && redemptionEarned)
+                  );
                   return (
                     <tr
                       key={milestone.id}

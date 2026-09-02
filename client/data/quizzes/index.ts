@@ -2,11 +2,13 @@ import type { Quiz } from "../quiz-types.js";
 import { week2Quizzes } from "./week2.js";
 import { week3Quizzes } from "./week3.js";
 import { week4Quizzes } from "./week4.js";
+import { sdrQuizzes } from "./sdr.js";
 
 export const QUIZZES: Quiz[] = [
   ...week2Quizzes,
   ...week3Quizzes,
   ...week4Quizzes,
+  ...sdrQuizzes,
 ];
 
 export function getQuizById(id: string): Quiz | undefined {
@@ -43,4 +45,5 @@ export const QUIZ_EMOJIS: Record<string, string> = {
   day13: "📑",  // Contract Lifecycle Management
   day14: "🤝",  // Deal Desk & CPQ
   day15: "🪢",  // Leveraging SEs & Professional Services
+  "sdr-cold-calling": "📞",  // Cold Calling + Nooks (SDR exclusive)
 };

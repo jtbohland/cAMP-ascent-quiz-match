@@ -3,18 +3,24 @@ import { useNavigate } from "react-router";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
 import { executeApi } from "@/lib/executeApi.js";
-import { QUIZZES, QUIZ_ORDER, QUIZ_EMOJIS } from "@/data/quizzes/index.js";
+import { QUIZZES, QUIZ_EMOJIS } from "@/data/quizzes/index.js";
 import type { Quiz } from "@/data/quiz-types.js";
+import { ALL_PATHS, getRolePathId, getPathById, type PathId, type PathConfig } from "@/data/paths.js";
 import XpCard from "@/components/camp/XpCard.js";
 import SummitModal from "@/components/camp/SummitModal.js";
 
 const ANALYTICS_PASSWORD = "smoreenablement";
+const ADMIN_EMAILS = ["jt.bohland@amplitude.com"];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const user = useSuperblocksUser();
   const userEmail = user?.email ?? "";
   const userName = user?.name ?? "";
+  const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
+
+  // Admin path switcher — default is AE
+  const [adminPathOverride, setAdminPathOverride] = useState<PathId>("ae");
 
   // Summit modal state
   const [showSummit, setShowSummit] = useState(false);
@@ -32,6 +38,19 @@ export default function HomePage() {
       // Silent — don't disrupt UX
     });
   }, [userEmail, user?.name]);
+
+  // Load the viewer's registration to get their role → path
+  const { data: viewerData } = useApiData(
+    "CampLookupViewer",
+    { userEmail },
+    { enabled: !!userEmail }
+  );
+
+  const viewerRole = viewerData?.viewer?.user_role ?? "";
+  const userPathId = getRolePathId(viewerRole);
+  // Admins see the switched path; regular users see their own path
+  const activePathId = isAdmin ? adminPathOverride : userPathId;
+  const activePath = getPathById(activePathId);
 
   const { data: progression, loading: progressionLoading, isError: progressionError, refetch: refetchProgression } = useApiData(
     "CampGetUserProgression",
@@ -62,9 +81,9 @@ export default function HomePage() {
     }
   })();
 
-  const passedQuizIds = effectiveProgression?.passedQuizIds ?? [];
-  const completedQuizIds = effectiveProgression?.completedQuizIds ?? [];
-  const retakeQuizIds = effectiveProgression?.retakeQuizIds ?? [];
+  const passedQuizIds: string[] = effectiveProgression?.passedQuizIds ?? [];
+  const completedQuizIds: string[] = effectiveProgression?.completedQuizIds ?? [];
+  const retakeQuizIds: string[] = effectiveProgression?.retakeQuizIds ?? [];
 
   // Fetch XP data for summit modal stats
   const { data: xpData } = useApiData(
@@ -73,47 +92,41 @@ export default function HomePage() {
     { enabled: !!userEmail }
   );
 
-  // Summit modal — "Seed, Don't Celebrate" pattern
+  // Summit modal — check if user has passed all quizzes in their path
   useEffect(() => {
     if (summitChecked.current || !userEmail || passedQuizIds.length === 0) return;
     summitChecked.current = true;
 
     const SUMMIT_KEY = `summit_celebrated_${userEmail}`;
     const alreadyCelebrated = localStorage.getItem(SUMMIT_KEY);
+    const pathQuizCount = activePath.quizOrder.length;
 
-    if (passedQuizIds.length >= 15) {
-      if (alreadyCelebrated) {
-        // Already celebrated — don't show again
-        return;
-      }
-      // First time reaching summit — celebrate!
+    // Count how many of the user's path quizzes they've passed
+    const pathPassedCount = activePath.quizOrder.filter((qid) => passedQuizIds.includes(qid)).length;
+
+    if (pathPassedCount >= pathQuizCount) {
+      if (alreadyCelebrated) return;
       localStorage.setItem(SUMMIT_KEY, "true");
       setShowSummit(true);
     }
-    // If < 15, seed nothing (unlike tier which seeds current level)
-  }, [userEmail, passedQuizIds]);
-  // "Fully failed" = in retakeQuizIds is false AND completed but not passed
-  // i.e., used all 4 attempts without passing → they get "Review Quiz" to see answers
+  }, [userEmail, passedQuizIds, activePath]);
+
   const fullyFailedQuizIds = completedQuizIds.filter(
     (id: string) => !passedQuizIds.includes(id) && !retakeQuizIds.includes(id)
   );
 
-  // A quiz is unlocked if:
-  // 1. It's the first quiz (always unlocked)
-  // 2. The user already attempted/completed this quiz
-  // 3. The user is in retake state (failed first 2 attempts)
-  // 4. The previous quiz in QUIZ_ORDER is "completed" (passed OR used all 4 attempts)
+  // Path-aware unlock: quiz N is unlocked when quiz N-1 in this path's order is completed
   const isQuizUnlocked = useCallback(
     (quizId: string): boolean => {
-      if (completedQuizIds.includes(quizId)) return true; // Already completed = always accessible
-      if (retakeQuizIds.includes(quizId)) return true; // In retake state = accessible
-      const idx = QUIZ_ORDER.indexOf(quizId as (typeof QUIZ_ORDER)[number]);
+      if (completedQuizIds.includes(quizId)) return true;
+      if (retakeQuizIds.includes(quizId)) return true;
+      const idx = activePath.quizOrder.indexOf(quizId);
       if (idx === 0) return true; // First quiz always unlocked
       if (idx < 0) return false;
-      const prevQuizId = QUIZ_ORDER[idx - 1];
+      const prevQuizId = activePath.quizOrder[idx - 1];
       return completedQuizIds.includes(prevQuizId);
     },
-    [completedQuizIds, retakeQuizIds]
+    [completedQuizIds, retakeQuizIds, activePath.quizOrder]
   );
 
   // Password gate for analytics
@@ -135,11 +148,13 @@ export default function HomePage() {
     }
   }, [password, navigate]);
 
-  const weeks = [
-    { label: "Week 2", emoji: "🥾", quizzes: QUIZZES.filter((q) => q.week === "Week 2") },
-    { label: "Week 3", emoji: "🏞️", quizzes: QUIZZES.filter((q) => q.week === "Week 3") },
-    { label: "Week 4", emoji: "🧗🏻‍♂️", quizzes: QUIZZES.filter((q) => q.week === "Week 4") },
-  ];
+  // Build week sections from the active path's week groups
+  const pathQuizMap = new Map(QUIZZES.map((q) => [q.id, q]));
+  const weekSections = activePath.weekLabels.map((wl) => {
+    const quizIds = activePath.weekGroups[wl.key] ?? [];
+    const quizzes = quizIds.map((id) => pathQuizMap.get(id)).filter(Boolean) as Quiz[];
+    return { label: wl.label, emoji: wl.emoji, quizzes };
+  });
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -180,6 +195,42 @@ export default function HomePage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
+        {/* Admin Path Switcher */}
+        {isAdmin && (
+          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-indigo-900">🔧 Admin: Path Viewer</h3>
+                <p className="text-xs text-indigo-600 mt-0.5">Preview quiz grids for each learner path (view-only)</p>
+              </div>
+              <div className="flex gap-2">
+                {ALL_PATHS.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setAdminPathOverride(p.id)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      adminPathOverride === p.id
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
+                    }`}
+                  >
+                    {p.emoji} {p.label} ({p.quizOrder.length})
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Path Badge for non-admins */}
+        {!isAdmin && viewerRole && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1 shadow-sm">
+              {activePath.emoji} {activePath.label} — {activePath.quizOrder.length} quizzes
+            </span>
+          </div>
+        )}
+
         {/* Personal XP Card */}
         <div className="mb-6">
           <XpCard />
@@ -227,7 +278,7 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-8">
-          {weeks.map((week) => (
+          {weekSections.map((week) => (
             <section key={week.label}>
               <h2 className="text-lg font-semibold text-slate-900 mb-3">
                 {week.emoji} {week.label}
@@ -238,7 +289,6 @@ export default function HomePage() {
                   const passed = passedQuizIds.includes(quiz.id);
                   const fullyFailed = fullyFailedQuizIds.includes(quiz.id);
                   const retake = retakeQuizIds.includes(quiz.id);
-                  // Show "Review Quiz" if passed OR failed all 4 attempts
                   const showReview = passed || fullyFailed;
                   return (
                     <QuizCard
@@ -338,6 +388,30 @@ function QuizCard({
   onStart: () => void;
 }) {
   const emoji = QUIZ_EMOJIS[quiz.id] ?? "📚";
+  const isPlaceholder = quiz.isPlaceholder === true;
+
+  // Placeholder quizzes show as "Coming Soon" regardless of unlock state
+  if (isPlaceholder) {
+    return (
+      <div className="rounded-xl border p-5 shadow-sm bg-slate-50 border-slate-200 opacity-80">
+        <div className="flex items-start justify-between mb-3">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+            {quiz.day}
+          </span>
+          <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full">
+            Coming Soon
+          </span>
+        </div>
+        <h3 className="text-base font-semibold text-slate-500 mb-2 leading-snug">
+          {emoji} {quiz.title}
+        </h3>
+        <p className="text-xs text-slate-400 mb-4">Questions being prepared</p>
+        <div className="w-full py-2 text-sm font-medium text-slate-400 border border-dashed border-slate-300 rounded-lg text-center">
+          🔒 Coming Soon
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

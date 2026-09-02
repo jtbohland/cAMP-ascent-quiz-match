@@ -5,6 +5,12 @@ import { RolePill, RegionPill } from "@/components/camp/pills.js";
 
 const RANK_EMOJI: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
+const PATH_PILL_STYLES: Record<string, string> = {
+  ae: "bg-blue-50 text-blue-700 border-blue-200",
+  sdr: "bg-purple-50 text-purple-700 border-purple-200",
+  promo: "bg-amber-50 text-amber-700 border-amber-200",
+};
+
 export default function LeaderboardPage() {
   const navigate = useNavigate();
   const user = useSuperblocksUser();
@@ -101,7 +107,12 @@ export default function LeaderboardPage() {
 
                       {/* Role */}
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <RolePill role={entry.userRole} />
+                        <div className="flex items-center gap-1.5">
+                          <RolePill role={entry.userRole} />
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${PATH_PILL_STYLES[entry.pathId] ?? "bg-slate-50 text-slate-600 border-slate-200"}`}>
+                            {entry.pathLabel}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Geo */}
@@ -114,6 +125,7 @@ export default function LeaderboardPage() {
                         <span className={`font-bold ${isCurrentUser ? "text-indigo-700" : "text-slate-900"}`}>
                           {entry.totalXp}
                         </span>
+                        <span className="text-xs text-slate-400 ml-0.5">/ {entry.pinnacleThreshold}</span>
                       </td>
 
                       {/* Quizzes Taken */}
