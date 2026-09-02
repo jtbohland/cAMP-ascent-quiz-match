@@ -26,6 +26,8 @@ export interface PathConfig {
   milestones: readonly number[];
   /** Pinnacle threshold (top tier minimum) */
   pinnacleThreshold: number;
+  /** Theoretical maximum XP achievable on this path */
+  maxXp: number;
 }
 
 // ─── AE Path (15 quizzes) ─── baseline ───
@@ -57,6 +59,7 @@ const AE_PATH: PathConfig = {
   ],
   milestones: [5, 10, 15],
   pinnacleThreshold: 235,
+  maxXp: 620,
 };
 
 // ─── SDR Path (11 quizzes) ─── ~73% scale ───
@@ -66,15 +69,14 @@ const SDR_PATH: PathConfig = {
   emoji: "📞",
   description: "Sales Development Rep — 11 quizzes tailored for SDRs",
   quizOrder: [
-    "day1", "day2", "day3", "day4",
-    "sdr-cold-calling",
+    "day1", "day2", "day3", "day4", "sdr-cold-calling",
     "day6", "day7", "day8", "day9", "day10",
     "day12",
   ],
   weekGroups: {
-    "Week 2": ["day1", "day2", "day3", "day4"],
-    "Week 3": ["sdr-cold-calling", "day6", "day7", "day8"],
-    "Week 4": ["day9", "day10", "day12"],
+    "Week 2": ["day1", "day2", "day3", "day4", "sdr-cold-calling"],
+    "Week 3": ["day6", "day7", "day8", "day9", "day10"],
+    "Week 4": ["day12"],
   },
   weekLabels: [
     { key: "Week 2", label: "Week 2", emoji: "🥾" },
@@ -89,6 +91,7 @@ const SDR_PATH: PathConfig = {
   ],
   milestones: [4, 7, 11],
   pinnacleThreshold: 172,
+  maxXp: 466,
 };
 
 // ─── Promo Path (7 quizzes) ─── ~47% scale ───
@@ -98,15 +101,16 @@ const PROMO_PATH: PathConfig = {
   emoji: "🚀",
   description: "SDR → Velocity AE Promotion — 7 key quizzes for role transitions",
   quizOrder: [
-    "day5", "day9", "day10", "day11", "day13", "day14", "day15",
+    "day5", "day9", "day10", "day11", "day13",
+    "day14", "day15",
   ],
   weekGroups: {
-    "Promo Week 1": ["day5", "day9", "day10"],
-    "Promo Week 2": ["day11", "day13", "day14", "day15"],
+    "Week 2": ["day5", "day9", "day10", "day11", "day13"],
+    "Week 3": ["day14", "day15"],
   },
   weekLabels: [
-    { key: "Promo Week 1", label: "Week 1", emoji: "🚀" },
-    { key: "Promo Week 2", label: "Week 2", emoji: "🏔️" },
+    { key: "Week 2", label: "Week 2", emoji: "🥾" },
+    { key: "Week 3", label: "Week 3", emoji: "🏞️" },
   ],
   tiers: [
     { min: 0, max: 35, name: "Base Camper", emoji: "🏕️" },
@@ -116,6 +120,7 @@ const PROMO_PATH: PathConfig = {
   ],
   milestones: [2, 5, 7],
   pinnacleThreshold: 111,
+  maxXp: 314,
 };
 
 // ─── Exports ───

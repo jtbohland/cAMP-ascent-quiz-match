@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
-import { ALL_PATHS, type PathId } from "@/data/paths.js";
+import { ALL_PATHS, type PathId, type PathConfig } from "@/data/paths.js";
 
 // Base XP actions (universal)
 const BASE_ACTIONS = [
@@ -123,6 +123,11 @@ export default function XpExplainerPage() {
               );
             })}
           </div>
+        </section>
+
+        {/* Max XP Card */}
+        <section>
+          <MaxXpCard activePath={activePath} />
         </section>
 
         {/* Section 2: Tiers (path-specific) */}
@@ -292,6 +297,73 @@ export default function XpExplainerPage() {
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+// ── Path display names for the Max XP card pill ──
+const PATH_PILL_LABELS: Record<PathId, string> = {
+  ae: "AE / PSM / RENEWALS PATH",
+  sdr: "SDR PATH",
+  promo: "VELOCITY PROMO PATH",
+};
+
+const PATH_PILL_COLORS: Record<PathId, string> = {
+  ae: "bg-emerald-600 text-white",
+  sdr: "bg-purple-600 text-white",
+  promo: "bg-amber-600 text-white",
+};
+
+function MaxXpCard({ activePath }: { activePath: PathConfig }) {
+  const quizCount = activePath.quizOrder.length;
+  const maxXp = activePath.maxXp;
+
+  // Realistic range descriptions per path
+  const summitMin = activePath.tiers.find((t) => t.name === "Summit Seeker")?.min ?? 0;
+  const summitMax = activePath.tiers.find((t) => t.name === "Summit Seeker")?.max ?? 0;
+  const pinnacleMin = activePath.pinnacleThreshold;
+  // "Alpinist All-Star" ~ top 70% of max
+  const allStarMin = Math.round(maxXp * 0.7);
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 shadow-sm">
+      {/* Path pill */}
+      <div className="flex justify-center mb-4">
+        <span
+          className={`text-[10px] font-bold tracking-wider px-3 py-1 rounded-full ${PATH_PILL_COLORS[activePath.id]}`}
+        >
+          {PATH_PILL_LABELS[activePath.id]} &bull; {quizCount} QUIZZES
+        </span>
+      </div>
+
+      {/* Max XP */}
+      <div className="text-center mb-3">
+        <p className="text-3xl font-bold text-slate-900">
+          🏆 ~{maxXp} XP
+        </p>
+        <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mt-1">
+          Theoretical Maximum
+        </p>
+      </div>
+
+      {/* Description */}
+      <p className="text-sm text-slate-600 text-center leading-relaxed max-w-md mx-auto">
+        A strong, engaged learner typically lands around{" "}
+        <span className="font-bold">
+          {summitMin}&ndash;{summitMax} XP
+        </span>{" "}
+        (Summit Seeker). Pinnacle Achiever ({pinnacleMin}+) requires consistent
+        first-pass scores.{" "}
+        <span className="font-bold">
+          Alpinist All-Star ({allStarMin}+)
+        </span>{" "}
+        is reserved for those who earn bonuses across the board.
+      </p>
+
+      {/* Pro tip */}
+      <p className="text-xs text-slate-500 text-center mt-4 italic">
+        Pro tip: Focus is 30% of your score. Stay on the tab, stay engaged. 🌲
+      </p>
     </div>
   );
 }

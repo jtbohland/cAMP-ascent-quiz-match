@@ -222,14 +222,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Path Badge for non-admins */}
-        {!isAdmin && viewerRole && (
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1 shadow-sm">
-              {activePath.emoji} {activePath.label} — {activePath.quizOrder.length} quizzes
-            </span>
-          </div>
-        )}
 
         {/* Personal XP Card */}
         <div className="mb-6">
@@ -290,10 +282,12 @@ export default function HomePage() {
                   const fullyFailed = fullyFailedQuizIds.includes(quiz.id);
                   const retake = retakeQuizIds.includes(quiz.id);
                   const showReview = passed || fullyFailed;
+                  const pathDayNum = activePath.quizOrder.indexOf(quiz.id) + 1;
                   return (
                     <QuizCard
                       key={quiz.id}
                       quiz={quiz}
+                      pathDayLabel={`Day ${pathDayNum}`}
                       unlocked={unlocked}
                       passed={passed}
                       retake={retake}
@@ -379,8 +373,10 @@ function QuizCard({
   retake,
   showReview,
   onStart,
+  pathDayLabel,
 }: {
   quiz: Quiz;
+  pathDayLabel: string;
   unlocked: boolean;
   passed: boolean;
   retake: boolean;
@@ -396,7 +392,7 @@ function QuizCard({
       <div className="rounded-xl border p-5 shadow-sm bg-slate-50 border-slate-200 opacity-80">
         <div className="flex items-start justify-between mb-3">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-            {quiz.day}
+            {pathDayLabel}
           </span>
           <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full">
             Coming Soon
@@ -423,7 +419,7 @@ function QuizCard({
     >
       <div className="flex items-start justify-between mb-3">
         <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">
-          {quiz.day}
+          {pathDayLabel}
         </span>
         <span className="text-xs text-slate-500">
           {passed ? "✅ Passed" : `${quiz.questions.length} questions`}

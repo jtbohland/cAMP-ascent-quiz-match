@@ -13,6 +13,7 @@ interface ServerPathConfig {
   tiers: { min: number; max: number; name: string; emoji: string }[];
   pinnacleThreshold: number;
   milestones: number[];
+  maxXp: number;
 }
 
 const PATHS: Record<PathId, ServerPathConfig> = {
@@ -26,31 +27,31 @@ const PATHS: Record<PathId, ServerPathConfig> = {
       { min: 151, max: 234, name: "Summit Seeker", emoji: "\u{1F9D7}" },
       { min: 235, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
     ],
-    pinnacleThreshold: 235, milestones: [5, 10, 15],
+    pinnacleThreshold: 235, milestones: [5, 10, 15], maxXp: 620,
   },
   sdr: {
     id: "sdr", label: "SDR Path",
     quizOrder: ["day1","day2","day3","day4","sdr-cold-calling","day6","day7","day8","day9","day10","day12"],
-    weekGroups: { "Week 2": ["day1","day2","day3","day4"], "Week 3": ["sdr-cold-calling","day6","day7","day8"], "Week 4": ["day9","day10","day12"] },
+    weekGroups: { "Week 2": ["day1","day2","day3","day4","sdr-cold-calling"], "Week 3": ["day6","day7","day8","day9","day10"], "Week 4": ["day12"] },
     tiers: [
       { min: 0, max: 55, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
       { min: 56, max: 110, name: "Trailblazer", emoji: "\u{1F97E}" },
       { min: 111, max: 171, name: "Summit Seeker", emoji: "\u{1F9D7}" },
       { min: 172, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
     ],
-    pinnacleThreshold: 172, milestones: [4, 7, 11],
+    pinnacleThreshold: 172, milestones: [4, 7, 11], maxXp: 466,
   },
   promo: {
     id: "promo", label: "Promo Path",
     quizOrder: ["day5","day9","day10","day11","day13","day14","day15"],
-    weekGroups: { "Promo Week 1": ["day5","day9","day10"], "Promo Week 2": ["day11","day13","day14","day15"] },
+    weekGroups: { "Week 2": ["day5","day9","day10","day11","day13"], "Week 3": ["day14","day15"] },
     tiers: [
       { min: 0, max: 35, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
       { min: 36, max: 71, name: "Trailblazer", emoji: "\u{1F97E}" },
       { min: 72, max: 110, name: "Summit Seeker", emoji: "\u{1F9D7}" },
       { min: 111, max: 9999, name: "Pinnacle Achiever", emoji: "\u{1F3D4}\uFE0F\u2728" },
     ],
-    pinnacleThreshold: 111, milestones: [2, 5, 7],
+    pinnacleThreshold: 111, milestones: [2, 5, 7], maxXp: 314,
   },
 };
 
@@ -168,6 +169,7 @@ export default api({
       pathLabel: z.string(),
       totalXp: z.number(),
       pinnacleThreshold: z.number(),
+      maxXp: z.number(),
       tier: z.object({
         name: z.string(),
         emoji: z.string(),
@@ -276,6 +278,7 @@ export default api({
           pathLabel: path.label,
           totalXp: xp,
           pinnacleThreshold: path.pinnacleThreshold,
+          maxXp: path.maxXp,
           tier: { name: tier.name, emoji: tier.emoji },
           quizzesCompleted: u.quizzes_completed,
           firstAttemptPasses: u.first_attempt_passes,

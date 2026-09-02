@@ -33,6 +33,7 @@ interface ServerPathConfig {
   tiers: { min: number; max: number; name: string; emoji: string }[];
   milestones: number[]; // First-attempt-pass thresholds
   pinnacleThreshold: number;
+  maxXp: number;
 }
 
 const PATHS: Record<PathId, ServerPathConfig> = {
@@ -52,14 +53,15 @@ const PATHS: Record<PathId, ServerPathConfig> = {
     ],
     milestones: [5, 10, 15],
     pinnacleThreshold: 235,
+    maxXp: 620,
   },
   sdr: {
     id: "sdr",
     quizOrder: ["day1","day2","day3","day4","sdr-cold-calling","day6","day7","day8","day9","day10","day12"],
     weekGroups: {
-      "Week 2": ["day1","day2","day3","day4"],
-      "Week 3": ["sdr-cold-calling","day6","day7","day8"],
-      "Week 4": ["day9","day10","day12"],
+      "Week 2": ["day1","day2","day3","day4","sdr-cold-calling"],
+      "Week 3": ["day6","day7","day8","day9","day10"],
+      "Week 4": ["day12"],
     },
     tiers: [
       { min: 0, max: 55, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
@@ -69,13 +71,14 @@ const PATHS: Record<PathId, ServerPathConfig> = {
     ],
     milestones: [4, 7, 11],
     pinnacleThreshold: 172,
+    maxXp: 466,
   },
   promo: {
     id: "promo",
     quizOrder: ["day5","day9","day10","day11","day13","day14","day15"],
     weekGroups: {
-      "Promo Week 1": ["day5","day9","day10"],
-      "Promo Week 2": ["day11","day13","day14","day15"],
+      "Week 2": ["day5","day9","day10","day11","day13"],
+      "Week 3": ["day14","day15"],
     },
     tiers: [
       { min: 0, max: 35, name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
@@ -85,6 +88,7 @@ const PATHS: Record<PathId, ServerPathConfig> = {
     ],
     milestones: [2, 5, 7],
     pinnacleThreshold: 111,
+    maxXp: 314,
   },
 };
 
@@ -118,6 +122,7 @@ export default api({
     pathId: z.string(),
     pathLabel: z.string(),
     pathQuizCount: z.number(),
+    maxXp: z.number(),
     breakdown: z.object({
       core: z.number(),
       milestones: z.number(),
@@ -398,6 +403,7 @@ export default api({
       pathId: path.id,
       pathLabel: pathLabels[pathId],
       pathQuizCount: path.quizOrder.length,
+      maxXp: path.maxXp,
       breakdown: {
         core: coreXp,
         milestones: milestoneXp,
