@@ -37,5 +37,5 @@ export const ROLES = [
 export type Role = (typeof ROLES)[number];
 
 export const PASS_THRESHOLD = 80;
-export const TOTAL_TIME_SECONDS = 1080; // 18 minutes
+export const TOTAL_TIME_SECONDS = 720; // 12 minutes
 export const MAX_ATTEMPTS = 4;

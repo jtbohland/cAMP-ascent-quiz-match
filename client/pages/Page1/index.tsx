@@ -269,42 +269,57 @@ export default function HomePage() {
           </ul>
         </div>
 
-        <div className="space-y-8">
-          {weekSections.map((week) => (
-            <section key={week.label}>
-              <h2 className="text-lg font-semibold text-slate-900 mb-3">
-                {week.emoji} {week.label}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {week.quizzes.map((quiz) => {
-                  const unlocked = isQuizUnlocked(quiz.id);
-                  const passed = passedQuizIds.includes(quiz.id);
-                  const fullyFailed = fullyFailedQuizIds.includes(quiz.id);
-                  const retake = retakeQuizIds.includes(quiz.id);
-                  const showReview = passed || fullyFailed;
-                  const pathDayNum = activePath.quizOrder.indexOf(quiz.id) + 1;
-                  return (
-                    <QuizCard
-                      key={quiz.id}
-                      quiz={quiz}
-                      pathDayLabel={`Day ${pathDayNum}`}
-                      unlocked={unlocked}
-                      passed={passed}
-                      retake={retake}
-                      showReview={showReview}
-                      onStart={() =>
-                        navigate(
-                          showReview
-                            ? `/quiz/${quiz.id}?mode=review`
-                            : `/quiz/${quiz.id}`
-                        )
-                      }
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+        <div className="space-y-6">
+          {weekSections.map((week) => {
+            const completedInWeek = week.quizzes.filter((q) => passedQuizIds.includes(q.id)).length;
+            return (
+              <section key={week.label} className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                {/* Week Header Bar */}
+                <div className="bg-amber-700 px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{week.emoji}</span>
+                    <span className="text-sm font-bold text-white">{week.label}</span>
+                    <span className="text-xs text-amber-200 font-medium bg-amber-800/50 px-2 py-0.5 rounded-full">
+                      {completedInWeek}/{week.quizzes.length} done
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quiz bars */}
+                <div className="divide-y divide-slate-100 bg-white">
+                  {week.quizzes.map((quiz) => {
+                    const unlocked = isQuizUnlocked(quiz.id);
+                    const passed = passedQuizIds.includes(quiz.id);
+                    const fullyFailed = fullyFailedQuizIds.includes(quiz.id);
+                    const retake = retakeQuizIds.includes(quiz.id);
+                    const showReview = passed || fullyFailed;
+                    const pathDayNum = activePath.quizOrder.indexOf(quiz.id) + 1;
+                    const inProgress = completedQuizIds.includes(quiz.id) && !passed && !fullyFailed;
+                    return (
+                      <QuizBar
+                        key={quiz.id}
+                        quiz={quiz}
+                        weekLabel={week.label}
+                        pathDayNum={pathDayNum}
+                        unlocked={unlocked}
+                        passed={passed}
+                        retake={retake}
+                        inProgress={inProgress}
+                        showReview={showReview}
+                        onNavigate={() =>
+                          navigate(
+                            showReview
+                              ? `/quiz/${quiz.id}?mode=review`
+                              : `/quiz/${quiz.id}`
+                          )
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </main>
 
@@ -366,88 +381,111 @@ export default function HomePage() {
   );
 }
 
-function QuizCard({
+function QuizBar({
   quiz,
+  weekLabel,
+  pathDayNum,
   unlocked,
   passed,
   retake,
+  inProgress,
   showReview,
-  onStart,
-  pathDayLabel,
+  onNavigate,
 }: {
   quiz: Quiz;
-  pathDayLabel: string;
+  weekLabel: string;
+  pathDayNum: number;
   unlocked: boolean;
   passed: boolean;
   retake: boolean;
+  inProgress: boolean;
   showReview: boolean;
-  onStart: () => void;
+  onNavigate: () => void;
 }) {
   const emoji = QUIZ_EMOJIS[quiz.id] ?? "📚";
   const isPlaceholder = quiz.isPlaceholder === true;
 
-  // Placeholder quizzes show as "Coming Soon" regardless of unlock state
+  // Status badge
+  let statusBadge: React.ReactNode;
   if (isPlaceholder) {
-    return (
-      <div className="rounded-xl border p-5 shadow-sm bg-slate-50 border-slate-200 opacity-80">
-        <div className="flex items-start justify-between mb-3">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-            {pathDayLabel}
-          </span>
-          <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-full">
-            Coming Soon
-          </span>
-        </div>
-        <h3 className="text-base font-semibold text-slate-500 mb-2 leading-snug">
-          {emoji} {quiz.title}
-        </h3>
-        <p className="text-xs text-slate-400 mb-4">Questions being prepared</p>
-        <div className="w-full py-2 text-sm font-medium text-slate-400 border border-dashed border-slate-300 rounded-lg text-center">
-          🔒 Coming Soon
-        </div>
-      </div>
+    statusBadge = (
+      <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+        Coming Soon
+      </span>
     );
+  } else if (passed) {
+    statusBadge = (
+      <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+        ✅ Completed
+      </span>
+    );
+  } else if (inProgress) {
+    statusBadge = (
+      <span className="text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+        🐌 In Progress
+      </span>
+    );
+  } else if (retake) {
+    statusBadge = (
+      <span className="text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+        🔄 Retake Available
+      </span>
+    );
+  } else if (!unlocked) {
+    statusBadge = (
+      <span className="text-xs font-medium text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+        🔒 Locked
+      </span>
+    );
+  } else {
+    statusBadge = null;
   }
 
   return (
     <div
-      className={`rounded-xl border p-5 shadow-sm transition-shadow ${
-        unlocked
-          ? "bg-white border-slate-200 hover:shadow-md"
-          : "bg-slate-100 border-slate-200 opacity-70"
-      }`}
+      className={`px-5 py-4 flex items-center gap-4 ${!unlocked && !isPlaceholder ? "opacity-60" : ""}`}
     >
-      <div className="flex items-start justify-between mb-3">
-        <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">
-          {pathDayLabel}
-        </span>
-        <span className="text-xs text-slate-500">
-          {passed ? "✅ Passed" : `${quiz.questions.length} questions`}
-        </span>
-      </div>
-      <h3 className="text-base font-semibold text-slate-900 mb-2 leading-snug">
-        {emoji} {quiz.title}
-      </h3>
-      <p className="text-xs text-slate-500 mb-4">80% to pass • 18 min • 2 attempts • 2 retakes</p>
-
-      {unlocked ? (
-        <button
-          onClick={onStart}
-          className={`w-full py-2 text-sm font-medium rounded-lg transition-colors ${
-            showReview
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : retake
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "bg-emerald-600 text-white hover:bg-emerald-700"
-          }`}
-        >
-          {showReview ? "📖 Review Quiz" : retake ? "🔄 Retake Quiz" : "👉🏽 This Way to Quiz"}
-        </button>
-      ) : (
-        <div className="w-full py-2 text-sm font-medium text-slate-400 border border-slate-200 rounded-lg text-center">
-          🔒 Pass previous quiz to unlock
+      {/* Left: day label + title */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            {weekLabel.toUpperCase()} · DAY {pathDayNum}
+          </span>
+          {statusBadge}
         </div>
-      )}
+        <h3 className="text-sm font-semibold text-slate-900 truncate">
+          {emoji} {quiz.title}
+        </h3>
+        <p className="text-[11px] text-slate-400 mt-0.5">
+          ⏱ ~12m · 80% to pass · 2 attempts · 2 retakes
+        </p>
+      </div>
+
+      {/* Right: action button */}
+      <div className="flex-shrink-0">
+        {isPlaceholder ? (
+          <span className="px-4 py-2 text-xs font-medium text-slate-400 border border-dashed border-slate-300 rounded-lg">
+            🔒 Coming Soon
+          </span>
+        ) : unlocked ? (
+          <button
+            onClick={onNavigate}
+            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+              showReview
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : retake
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-orange-600 text-white hover:bg-orange-700"
+            }`}
+          >
+            {showReview ? "📖 Review Quiz" : retake ? "🔄 Retake Quiz" : "🐻 Take cAMP Quiz"}
+          </button>
+        ) : (
+          <span className="px-4 py-2 text-xs font-medium text-slate-400 border border-slate-200 rounded-lg">
+            🔒 Pass previous quiz
+          </span>
+        )}
+      </div>
     </div>
   );
 }

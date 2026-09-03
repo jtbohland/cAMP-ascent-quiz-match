@@ -13,6 +13,7 @@ interface LeaderboardEntry {
   tier: { name: string; emoji: string };
   quizzesCompleted: number;
   firstAttemptPasses: number;
+  avgTimeSeconds: number | null;
 }
 
 export default function LeaderboardTable({
@@ -50,6 +51,9 @@ export default function LeaderboardTable({
           </th>
           <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
             1st Pass
+          </th>
+          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Avg
           </th>
           <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Tier
@@ -134,6 +138,13 @@ export default function LeaderboardTable({
               {/* 1st Attempt Passes */}
               <td className="px-4 py-3 whitespace-nowrap text-center text-slate-700">
                 {entry.firstAttemptPasses}
+              </td>
+
+              {/* Avg Time */}
+              <td className="px-4 py-3 whitespace-nowrap text-center text-slate-500 text-xs">
+                {entry.avgTimeSeconds != null
+                  ? `${(entry.avgTimeSeconds / 60).toFixed(1)}m`
+                  : "—"}
               </td>
 
               {/* Tier */}

@@ -12,6 +12,7 @@ interface LeaderboardEntry {
   tier: { name: string; emoji: string };
   quizzesCompleted: number;
   firstAttemptPasses: number;
+  avgTimeSeconds: number | null;
 }
 
 // Role group display config
