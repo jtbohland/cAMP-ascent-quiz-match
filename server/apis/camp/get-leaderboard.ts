@@ -176,6 +176,7 @@ export default api({
       }),
       quizzesCompleted: z.number(),
       firstAttemptPasses: z.number(),
+      avgTimeSeconds: z.number().nullable(),
     })),
   }),
   async run(ctx) {
@@ -282,6 +283,10 @@ export default api({
           tier: { name: tier.name, emoji: tier.emoji },
           quizzesCompleted: u.quizzes_completed,
           firstAttemptPasses: u.first_attempt_passes,
+          avgTimeSeconds: (() => {
+            const times = userAttempts.filter((a) => a.time_spent_seconds != null && a.time_spent_seconds > 0).map((a) => a.time_spent_seconds!);
+            return times.length > 0 ? Math.round(times.reduce((s, t) => s + t, 0) / times.length) : null;
+          })(),
           rank: 0,
         };
       })

@@ -390,7 +390,7 @@ export default function QuizPage() {
             onClick={() => navigate("/")}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
           >
-            🧠 Back to cAMP Quizzes
+            🦉 Back to cAMP Quizzes
           </button>
         </div>
       </div>
@@ -561,7 +561,7 @@ export default function QuizPage() {
                 onClick={isReviewMode || attemptNumber % 2 === 0 ? () => navigate("/") : handleFinishReview}
                 className="px-6 py-2.5 bg-amber-700 text-white rounded-lg font-medium text-sm hover:bg-amber-800"
               >
-                {isReviewMode || attemptNumber % 2 === 0 ? "🧠 Back to cAMP Quizzes" : "See Results"}
+                {isReviewMode || attemptNumber % 2 === 0 ? "🦉 Back to cAMP Quizzes" : "See Results"}
               </button>
             </div>
           </div>
@@ -662,7 +662,7 @@ function IntroScreen({
           onClick={() => window.location.href = "/"}
           className="w-full py-2.5 text-amber-700 border border-amber-300 bg-amber-50 rounded-lg font-medium text-sm hover:bg-amber-100 transition-colors"
         >
-          🧠 Back to cAMP Quizzes
+          🦉 Back to cAMP Quizzes
         </button>
       </div>
     </div>
