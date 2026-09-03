@@ -167,7 +167,7 @@ export default function HomePage() {
                 🏔️ cAMP Ascent: Sales
               </h1>
               <p className="text-sm text-amber-100 mt-1">
-                🧠 Knowledge Checks — Validate your learning from each session
+                🦉 Knowledge Checks — Validate your learning from each session
               </p>
             </div>
             <div className="flex gap-2">
@@ -478,7 +478,7 @@ function QuizBar({
                   : "bg-orange-600 text-white hover:bg-orange-700"
             }`}
           >
-            {showReview ? "📖 Review Quiz" : retake ? "🔄 Retake Quiz" : "🐻 Take cAMP Quiz"}
+            {showReview ? "📖 Review Quiz" : retake ? "🔄 Retake Quiz" : "🦉 Take cAMP Quiz"}
           </button>
         ) : (
           <span className="px-4 py-2 text-xs font-medium text-slate-400 border border-slate-200 rounded-lg">

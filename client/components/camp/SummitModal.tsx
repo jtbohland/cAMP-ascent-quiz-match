@@ -149,7 +149,7 @@ export default function SummitModal({
             onClick={onDismiss}
             className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-3 rounded-lg transition-colors"
           >
-            🧠 Back to cAMP Quizzes
+            🦉 Back to cAMP Quizzes
           </button>
         </div>
       </div>

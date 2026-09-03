@@ -45,7 +45,7 @@ export default function QuizResults({
           ? "You've conquered this trail! Your knowledge of this material is solid. Keep ascending! ⛺"
           : canRetry
             ? `You need ${PASS_THRESHOLD}% to summit. Regroup at base camp — you have one more attempt. Hit Try Again!`
-            : `You need ${PASS_THRESHOLD}% to pass. Head back to cAMP Quizzes — you can retake anytime to improve your score. 🧠`}
+            : `You need ${PASS_THRESHOLD}% to pass. Head back to cAMP Quizzes — you can retake anytime to improve your score. 🦉`}
       </p>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -82,7 +82,7 @@ export default function QuizResults({
             onClick={onBackToQuizzes}
             className="px-5 py-2.5 bg-amber-700 text-white rounded-lg font-medium text-sm hover:bg-amber-800 transition-colors"
           >
-            🧠 Back to cAMP Quizzes
+            🦉 Back to cAMP Quizzes
           </button>
         )}
       </div>
