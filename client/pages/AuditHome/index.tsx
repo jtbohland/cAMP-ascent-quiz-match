@@ -52,50 +52,54 @@ export default function AuditHomePage() {
   // Home: tile grid
   return (
     <div className="min-h-screen bg-orange-50">
-      {/* Header */}
+      {/* Header — compact, mirrors Ascent */}
       <header className="bg-amber-700 border-b border-amber-800">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🍁</span>
             <div>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🍁</span>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Welcome to the cAMP Quiz Audit</h1>
-                  <p className="text-sm text-amber-100 mt-1">
-                    As a Subject Matter Expert, review quiz questions, options, and correct answers assigned to you.
-                    When you're satisfied, sign off at the bottom of each quiz.
-                  </p>
-                </div>
-              </div>
+              <h1 className="text-lg font-bold text-white">cAMP Quiz Audit</h1>
+              <p className="text-xs text-amber-200">SME Quiz Review</p>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-amber-100">Signed in as</div>
-              <div className="text-white font-semibold">{smeName}</div>
-              {isAdmin && (
-                <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-amber-500 text-white rounded-full">
-                  Admin
-                </span>
-              )}
-            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-amber-200">Signed in as</div>
+            <div className="text-white font-semibold text-sm">{smeName}</div>
+            {isAdmin && (
+              <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-amber-500 text-white rounded-full">
+                Admin
+              </span>
+            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* What is cAMP Ascent info box */}
+        {/* Welcome box — mirrors Ascent layout */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-2">
-            <span>🏕️</span> What is cAMP Ascent?
-          </h3>
-          <p className="text-sm text-gray-600 mb-3">
-            cAMP Ascent is Amplitude's interactive onboarding program for new GTM hires and internal promotions.
-            It's organized into <strong>3 role-based learning paths</strong> (AE/PSM/Renewals, SDR, and Promotions),
-            each with quiz-based knowledge checks. Every new rep goes through Ascent in their first 4 weeks.
-          </p>
-          <p className="text-sm text-gray-600">
-            Your job as an SME is to verify the quiz questions, options, and correct answers
-            are accurate and current. Changes you make go <strong>live immediately</strong> for learners.
-          </p>
+          <div className="flex items-start gap-4 mb-4">
+            <span className="text-3xl mt-0.5">🍁</span>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Welcome to the cAMP Quiz Audit</h2>
+              <p className="text-sm text-gray-600">
+                As a Subject Matter Expert, you play a critical role in keeping our quiz content accurate and current.
+                Review each quiz assigned to you — verify questions, options, and correct answers.
+                When you're satisfied, sign off at the bottom of each quiz.
+              </p>
+            </div>
+          </div>
+
+          <details className="mt-3">
+            <summary className="text-sm font-medium text-amber-700 cursor-pointer hover:text-amber-800">
+              🏕️ What is cAMP Ascent?
+            </summary>
+            <p className="text-sm text-gray-600 mt-2">
+              cAMP Ascent is Amplitude's interactive onboarding program for new GTM hires and internal promotions.
+              It's organized into <strong>3 role-based learning paths</strong> (AE/PSM/Renewals, SDR, and Promotions),
+              each with quiz-based knowledge checks. Every new rep goes through Ascent in their first 4 weeks.
+              Your job is to verify that quiz content is accurate. Changes you make go <strong>live immediately</strong> for learners.
+            </p>
+          </details>
         </div>
 
         {loading && (
