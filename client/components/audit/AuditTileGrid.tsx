@@ -95,7 +95,7 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               onKeyDown={(e) => { if (canAccess && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onSelectTopic(topic.quiz_id); } }}
               className={`
-                rounded-xl overflow-hidden transition-all shadow
+                flex flex-col rounded-xl overflow-hidden transition-all shadow
                 ${canAccess
                   ? "hover:shadow-lg cursor-pointer"
                   : "opacity-75 cursor-default"}
@@ -122,7 +122,7 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               </div>
 
               {/* ── 2. Body — white with rounded bottom corners ── */}
-              <div className="bg-white px-4 py-3 flex flex-col gap-2">
+              <div className="bg-white px-4 py-3 flex flex-col gap-2 flex-1">
                 {/* Pills row */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
