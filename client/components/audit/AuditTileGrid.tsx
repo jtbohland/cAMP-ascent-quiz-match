@@ -32,18 +32,27 @@ const PATH_TAG_COLORS: Record<string, { bg: string; text: string }> = {
   Special: { bg: "bg-orange-100", text: "text-orange-700" },
 };
 
-function getProgress(topic: AuditTopic): { pct: number; label: string } {
-  if (topic.signoff_count > 0) return { pct: 100, label: "Signed Off" };
-  if (topic.question_count === 0) return { pct: 0, label: "Not Started · 0%" };
+function getProgress(topic: AuditTopic): { pct: number; status: "complete" | "in_progress" | "not_started"; label: string } {
+  if (topic.signoff_count > 0) return { pct: 100, status: "complete", label: "Signed Off · 100%" };
+  if (topic.question_count === 0) return { pct: 0, status: "not_started", label: "Not Started · 0%" };
   const pct = Math.round((topic.approved_count / topic.question_count) * 100);
-  if (pct === 0) return { pct: 0, label: "Not Started · 0%" };
-  return { pct, label: `In Progress · ${pct}%` };
+  if (pct === 0) return { pct: 0, status: "not_started", label: "Not Started · 0%" };
+  if (pct >= 100) return { pct: 100, status: "complete", label: "Complete · 100%" };
+  return { pct, status: "in_progress", label: `In Progress · ${pct}%` };
+}
+
+function getActivityColor(dateStr: string | null): string {
+  if (!dateStr) return "bg-gray-100 text-gray-500";
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (days <= 7) return "bg-emerald-50 text-emerald-700";
+  if (days <= 14) return "bg-yellow-50 text-yellow-700";
+  if (days <= 21) return "bg-orange-50 text-orange-700";
+  return "bg-red-50 text-red-700";
 }
 
 function formatLastActivity(dateStr: string | null): string {
   if (!dateStr) return "No activity yet";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" });
+  return `Last activity: ${new Date(dateStr).toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })}`;
 }
 
 function isSmeAssigned(topic: AuditTopic, smeName: string): boolean {
@@ -64,6 +73,19 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
           const emoji = QUIZ_EMOJIS[topic.quiz_id] ?? "📝";
           const tag = topic.path_tag ?? "All Roles";
           const tagColors = PATH_TAG_COLORS[tag] ?? PATH_TAG_COLORS["All Roles"];
+          const activityColor = getActivityColor(topic.last_activity);
+
+          const statusPill = progress.status === "complete"
+            ? "bg-emerald-100 text-emerald-700"
+            : progress.status === "in_progress"
+            ? "bg-amber-100 text-amber-700"
+            : "bg-gray-200/60 text-gray-300";
+
+          const statusDot = progress.status === "complete"
+            ? "bg-emerald-500"
+            : progress.status === "in_progress"
+            ? "bg-amber-500"
+            : "bg-gray-400";
 
           return (
             <button
@@ -71,63 +93,66 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl shadow-sm transition-all bg-amber-700
+                text-left rounded-xl overflow-hidden transition-all
                 ${canAccess
-                  ? "hover:shadow-md cursor-pointer"
-                  : "opacity-60 cursor-not-allowed"}
+                  ? "bg-white border border-gray-200 hover:shadow-lg hover:border-amber-400 cursor-pointer"
+                  : "bg-gray-50 border border-gray-100 opacity-75 cursor-default"}
               `}
             >
-              {/* Header — lives on the amber-700 card background */}
-              <div className="px-4 pt-2.5 pb-2.5">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm">{emoji}</span>
-                    <span className="text-[11px] font-bold text-amber-200 uppercase tracking-wider">
-                      {topic.day ?? topic.quiz_id}
-                    </span>
+              {/* ── 1. Header Bar ── */}
+              <div className="bg-amber-700 px-4 py-2.5 flex items-start gap-2.5">
+                <span className="text-lg flex-shrink-0 leading-none mt-0.5">{emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider leading-tight">
+                    {topic.day ?? topic.quiz_id}
                   </div>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                    progress.pct === 100
-                      ? "bg-green-100 text-green-700"
-                      : progress.pct > 0
-                      ? "bg-amber-100 text-amber-800"
-                      : "bg-white/20 text-white"
-                  }`}>
-                    {progress.label}
-                  </span>
+                  <div className="text-sm font-bold text-white leading-snug truncate">
+                    {topic.quiz_topic}
+                  </div>
                 </div>
-                <h3 className="font-bold text-white text-sm leading-snug line-clamp-1">
-                  {topic.quiz_topic}
-                </h3>
+                <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusPill}`}>
+                  <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                  {progress.label}
+                </span>
               </div>
 
-              {/* White body — tag, activity, SMEs */}
-              <div className="bg-white rounded-b-xl">
-                <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
+              {/* ── 2. Body ── */}
+              <div className="px-4 py-3 flex flex-col gap-2">
+                {/* Pills row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
                     {tag}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${activityColor}`}>
                     {formatLastActivity(topic.last_activity)}
                   </span>
                 </div>
 
-                <div className="px-4 pb-4 text-xs text-gray-600 space-y-0.5">
+                {/* SME list */}
+                <div className="text-xs space-y-0.5">
                   {topic.smes.split("\n").map((sme, i) => {
                     const [name, ...titleParts] = sme.split(" · ");
                     const title = titleParts.join(" · ");
                     const isCurrentUser = name.toLowerCase().trim() === currentSmeName.toLowerCase();
                     return (
-                      <div key={i} className={isCurrentUser ? "text-amber-700" : ""}>
-                        <span className="font-semibold">{name}</span>
+                      <div key={i} className={isCurrentUser ? "text-amber-700" : "text-gray-700"}>
+                        <span className="font-medium">{name}</span>
                         {title && <span className="text-gray-400"> · {title}</span>}
                       </div>
                     );
                   })}
                 </div>
 
+                {/* Assigned-to-you indicator */}
+                {assigned && !isAdmin && (
+                  <div className="border-t border-gray-100 pt-2 text-[10px] font-bold text-amber-700">
+                    🎯 Assigned to you
+                  </div>
+                )}
+
+                {/* Lock indicator */}
                 {!canAccess && (
-                  <div className="px-4 pb-3 text-xs text-gray-400 flex items-center gap-1">
+                  <div className="border-t border-gray-100 pt-2 text-[10px] text-gray-400">
                     🔒 Assigned to other SMEs
                   </div>
                 )}
