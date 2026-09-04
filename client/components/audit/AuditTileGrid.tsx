@@ -76,10 +76,10 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
           const activityColor = getActivityColor(topic.last_activity);
 
           const statusPill = progress.status === "complete"
-            ? "bg-emerald-100 text-emerald-700"
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
             : progress.status === "in_progress"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-gray-200/60 text-gray-300";
+            ? "bg-amber-50 text-amber-700 border-amber-200"
+            : "bg-gray-100 text-gray-600 border-gray-200";
 
           const statusDot = progress.status === "complete"
             ? "bg-emerald-500"
@@ -100,18 +100,22 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               `}
             >
               {/* ── 1. Header Bar ── */}
-              <div className="bg-amber-700 px-4 py-2.5 flex items-start gap-2.5">
-                <span className="text-lg flex-shrink-0 leading-none mt-0.5">{emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider leading-tight">
-                    {topic.day ?? topic.quiz_id}
-                  </div>
-                  <div className="text-sm font-bold text-white leading-snug truncate">
-                    {topic.quiz_topic}
+              <div className="bg-amber-700 px-4 py-2.5 flex items-center justify-between gap-2">
+                {/* Left: emoji + text stack */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-lg flex-shrink-0">{emoji}</span>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-semibold text-amber-300 uppercase tracking-[0.05em]">
+                      {topic.day ?? topic.quiz_id}
+                    </div>
+                    <div className="text-sm font-bold text-white leading-[1.25] overflow-hidden text-ellipsis whitespace-nowrap">
+                      {topic.quiz_topic}
+                    </div>
                   </div>
                 </div>
-                <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusPill}`}>
-                  <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                {/* Right: status pill */}
+                <span className={`flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusPill}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
                   {progress.label}
                 </span>
               </div>
