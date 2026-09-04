@@ -18,9 +18,14 @@ interface Props {
 export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, isAdmin, onBack }: Props) {
   const { data, loading, fetching, isError, error, refetch } = useApiData("AuditGetQuizDetail", { quizId });
   const { run: addSme, loading: addingSme } = useApi("AuditAddSme");
+  const { run: updateSme } = useApi("AuditUpdateSme");
+  const { run: removeSme } = useApi("AuditRemoveSme");
   const [showAddSme, setShowAddSme] = useState(false);
   const [newSmeName, setNewSmeName] = useState("");
   const [newSmeTitle, setNewSmeTitle] = useState("");
+  const [editingSmeIdx, setEditingSmeIdx] = useState<number | null>(null);
+  const [editSmeName, setEditSmeName] = useState("");
+  const [editSmeTitle, setEditSmeTitle] = useState("");
 
   if (loading) {
     return (
@@ -88,65 +93,93 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
           <div className="text-sm text-gray-600">
             <span className="font-medium">Subject Matter Experts:</span>
             {data.smes.map((sme, i) => (
-              <div key={i} className="ml-4 mt-1">
-                <span className="font-medium">{sme.sme_name}</span>
-                <span className="text-gray-400"> · {sme.sme_title}</span>
-                {sme.is_registered && <span className="ml-2 text-xs text-green-600">✓ Registered</span>}
+              <div key={i} className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
+                {editingSmeIdx === i ? (
+                  <>
+                    <input value={editSmeName} onChange={(e) => setEditSmeName(e.target.value)} className="px-2 py-0.5 border border-gray-300 rounded text-xs w-36 outline-none focus:ring-1 focus:ring-amber-500" />
+                    <input value={editSmeTitle} onChange={(e) => setEditSmeTitle(e.target.value)} className="px-2 py-0.5 border border-gray-300 rounded text-xs w-48 outline-none focus:ring-1 focus:ring-amber-500" />
+                    <button
+                      onClick={async () => {
+                        try {
+                          await updateSme({ quizId, oldSmeName: sme.sme_name, newSmeName: editSmeName.trim(), newSmeTitle: editSmeTitle.trim() });
+                          toast.success("Updated");
+                          setEditingSmeIdx(null);
+                          refetch();
+                        } catch (err) { toast.error("Failed to update"); }
+                      }}
+                      className="text-xs text-green-700 hover:text-green-800 font-medium"
+                    >Save</button>
+                    <button onClick={() => setEditingSmeIdx(null)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium">{sme.sme_name}</span>
+                    <span className="text-gray-400">· {sme.sme_title}</span>
+                    {sme.is_registered && <span className="text-xs text-green-600">✓ Registered</span>}
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => { setEditingSmeIdx(i); setEditSmeName(sme.sme_name); setEditSmeTitle(sme.sme_title); }}
+                          className="text-[10px] text-gray-400 hover:text-amber-700"
+                        >Edit</button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Remove ${sme.sme_name} from this quiz?`)) return;
+                            try {
+                              await removeSme({ quizId, smeName: sme.sme_name });
+                              toast.success(`Removed ${sme.sme_name}`);
+                              refetch();
+                            } catch (err) { toast.error("Failed to remove"); }
+                          }}
+                          className="text-[10px] text-gray-400 hover:text-red-600"
+                        >Remove</button>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             ))}
 
-            {/* Add SME */}
-            {!showAddSme ? (
+            {/* Add SME + Invite */}
+            <div className="ml-4 mt-2 flex items-center gap-3">
+              {!showAddSme ? (
+                <button onClick={() => setShowAddSme(true)} className="text-xs text-amber-700 hover:text-amber-800 font-medium">
+                  + Add SME
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input type="text" value={newSmeName} onChange={(e) => setNewSmeName(e.target.value)} placeholder="Name" className="px-2 py-1 border border-gray-300 rounded text-xs w-40 focus:ring-1 focus:ring-amber-500 outline-none" />
+                  <input type="text" value={newSmeTitle} onChange={(e) => setNewSmeTitle(e.target.value)} placeholder="Role / Title" className="px-2 py-1 border border-gray-300 rounded text-xs w-56 focus:ring-1 focus:ring-amber-500 outline-none" />
+                  <button
+                    onClick={async () => {
+                      if (!newSmeName.trim() || !newSmeTitle.trim()) return;
+                      try {
+                        await addSme({ quizId, quizTopic, smeName: newSmeName.trim(), smeTitle: newSmeTitle.trim() });
+                        toast.success(`Added ${newSmeName.trim()}`);
+                        setNewSmeName(""); setNewSmeTitle(""); setShowAddSme(false);
+                        refetch();
+                      } catch (err) {
+                        const msg = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : String(err);
+                        toast.error("Failed: " + msg);
+                      }
+                    }}
+                    disabled={addingSme || !newSmeName.trim() || !newSmeTitle.trim()}
+                    className="text-xs px-3 py-1 bg-amber-700 text-white rounded hover:bg-amber-800 disabled:opacity-50"
+                  >{addingSme ? "..." : "Add"}</button>
+                  <button onClick={() => { setShowAddSme(false); setNewSmeName(""); setNewSmeTitle(""); }} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+              )}
               <button
-                onClick={() => setShowAddSme(true)}
-                className="ml-4 mt-2 text-xs text-amber-700 hover:text-amber-800 font-medium"
+                onClick={() => {
+                  const url = `${window.location.origin}/audit`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Audit registration link copied! Share it with the SME via Slack.");
+                }}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
               >
-                + Add SME
+                📋 Invite an SME
               </button>
-            ) : (
-              <div className="ml-4 mt-2 flex items-center gap-2 flex-wrap">
-                <input
-                  type="text"
-                  value={newSmeName}
-                  onChange={(e) => setNewSmeName(e.target.value)}
-                  placeholder="Name"
-                  className="px-2 py-1 border border-gray-300 rounded text-xs w-40 focus:ring-1 focus:ring-amber-500 outline-none"
-                />
-                <input
-                  type="text"
-                  value={newSmeTitle}
-                  onChange={(e) => setNewSmeTitle(e.target.value)}
-                  placeholder="Role / Title"
-                  className="px-2 py-1 border border-gray-300 rounded text-xs w-56 focus:ring-1 focus:ring-amber-500 outline-none"
-                />
-                <button
-                  onClick={async () => {
-                    if (!newSmeName.trim() || !newSmeTitle.trim()) return;
-                    try {
-                      await addSme({ quizId, quizTopic, smeName: newSmeName.trim(), smeTitle: newSmeTitle.trim() });
-                      toast.success(`Added ${newSmeName.trim()}`);
-                      setNewSmeName("");
-                      setNewSmeTitle("");
-                      setShowAddSme(false);
-                      refetch();
-                    } catch (err) {
-                      const msg = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : String(err);
-                      toast.error("Failed: " + msg);
-                    }
-                  }}
-                  disabled={addingSme || !newSmeName.trim() || !newSmeTitle.trim()}
-                  className="text-xs px-3 py-1 bg-amber-700 text-white rounded hover:bg-amber-800 disabled:opacity-50"
-                >
-                  {addingSme ? "..." : "Add"}
-                </button>
-                <button
-                  onClick={() => { setShowAddSme(false); setNewSmeName(""); setNewSmeTitle(""); }}
-                  className="text-xs text-gray-400 hover:text-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 

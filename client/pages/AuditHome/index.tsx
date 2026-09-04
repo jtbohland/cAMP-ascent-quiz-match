@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
+import { toast } from "sonner";
 import AuditRegisterGate from "@/components/audit/AuditRegisterGate.js";
 import AuditTileGrid from "@/components/audit/AuditTileGrid.js";
 import AuditQuizDetail from "@/components/audit/AuditQuizDetail.js";
@@ -62,14 +63,28 @@ export default function AuditHomePage() {
               <p className="text-xs text-amber-200">SME Quiz Review</p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-amber-200">Signed in as</div>
-            <div className="text-white font-semibold text-sm">{smeName}</div>
+          <div className="text-right flex items-center gap-3">
             {isAdmin && (
-              <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-amber-500 text-white rounded-full">
-                Admin
-              </span>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/audit`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Audit link copied! Share it with SMEs via Slack.");
+                }}
+                className="text-xs px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors"
+              >
+                📋 Share the Audit
+              </button>
             )}
+            <div>
+              <div className="text-xs text-amber-200">Signed in as</div>
+              <div className="text-white font-semibold text-sm">{smeName}</div>
+              {isAdmin && (
+                <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 bg-amber-500 text-white rounded-full">
+                  Admin
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
