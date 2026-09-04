@@ -10,10 +10,11 @@ const ADMIN_EMAILS = ["jt.bohland@amplitude.com"];
 
 export default function AuditHomePage() {
   const user = useSuperblocksUser();
-  const [smeName, setSmeName] = useState<string | null>(null);
-  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
-
   const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase() ?? "");
+
+  // Admin auto-bypasses registration — use their Superblocks name directly
+  const [smeName, setSmeName] = useState<string | null>(isAdmin ? (user?.name ?? "Admin") : null);
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
   const { data, loading, fetching, isError, error, refetch } = useApiData(
     "AuditGetDashboard",

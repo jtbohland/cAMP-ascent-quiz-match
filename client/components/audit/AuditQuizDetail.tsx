@@ -20,12 +20,11 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
   const { run: addSme, loading: addingSme } = useApi("AuditAddSme");
   const { run: updateSme } = useApi("AuditUpdateSme");
   const { run: removeSme } = useApi("AuditRemoveSme");
-  const [showAddSme, setShowAddSme] = useState(false);
+  const [smeEditMode, setSmeEditMode] = useState(false);
+  const [editedSmes, setEditedSmes] = useState<Array<{ name: string; title: string; original: string }>>([]);
   const [newSmeName, setNewSmeName] = useState("");
   const [newSmeTitle, setNewSmeTitle] = useState("");
-  const [editingSmeIdx, setEditingSmeIdx] = useState<number | null>(null);
-  const [editSmeName, setEditSmeName] = useState("");
-  const [editSmeTitle, setEditSmeTitle] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (loading) {
     return (
@@ -89,97 +88,113 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
             })()}
           </p>
 
-          {/* SMEs */}
+          {/* SMEs — header row with action buttons */}
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Subject Matter Experts:</span>
-            {data.smes.map((sme, i) => (
-              <div key={i} className="ml-4 mt-1 flex items-center gap-2 flex-wrap">
-                {editingSmeIdx === i ? (
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium">Subject Matter Experts:</span>
+              <div className="flex items-center gap-2">
+                {smeEditMode ? (
                   <>
-                    <input value={editSmeName} onChange={(e) => setEditSmeName(e.target.value)} className="px-2 py-0.5 border border-gray-300 rounded text-xs w-36 outline-none focus:ring-1 focus:ring-amber-500" />
-                    <input value={editSmeTitle} onChange={(e) => setEditSmeTitle(e.target.value)} className="px-2 py-0.5 border border-gray-300 rounded text-xs w-48 outline-none focus:ring-1 focus:ring-amber-500" />
+                    <button onClick={() => { setSmeEditMode(false); setEditedSmes([]); setNewSmeName(""); setNewSmeTitle(""); }} className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
                     <button
+                      disabled={saving}
                       onClick={async () => {
+                        setSaving(true);
                         try {
-                          await updateSme({ quizId, oldSmeName: sme.sme_name, newSmeName: editSmeName.trim(), newSmeTitle: editSmeTitle.trim() });
-                          toast.success("Updated");
-                          setEditingSmeIdx(null);
+                          // Process edits
+                          for (const es of editedSmes) {
+                            if (es.name !== es.original) {
+                              const orig = data.smes.find(s => s.sme_name === es.original);
+                              if (orig) await updateSme({ quizId, oldSmeName: es.original, newSmeName: es.name.trim(), newSmeTitle: es.title.trim() });
+                            } else {
+                              const orig = data.smes.find(s => s.sme_name === es.original);
+                              if (orig && es.title !== orig.sme_title) {
+                                await updateSme({ quizId, oldSmeName: es.original, newSmeName: es.name.trim(), newSmeTitle: es.title.trim() });
+                              }
+                            }
+                          }
+                          // Add new SME if filled
+                          if (newSmeName.trim() && newSmeTitle.trim()) {
+                            await addSme({ quizId, quizTopic, smeName: newSmeName.trim(), smeTitle: newSmeTitle.trim() });
+                          }
+                          toast.success("SMEs updated");
+                          setSmeEditMode(false); setEditedSmes([]); setNewSmeName(""); setNewSmeTitle("");
                           refetch();
-                        } catch (err) { toast.error("Failed to update"); }
+                        } catch (err) { toast.error("Failed to save"); }
+                        setSaving(false);
                       }}
-                      className="text-xs text-green-700 hover:text-green-800 font-medium"
-                    >Save</button>
-                    <button onClick={() => setEditingSmeIdx(null)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                      className="text-xs px-3 py-1 bg-green-700 text-white rounded hover:bg-green-800 disabled:opacity-50 font-medium"
+                    >💾 Save</button>
                   </>
                 ) : (
                   <>
-                    <span className="font-medium">{sme.sme_name}</span>
-                    <span className="text-gray-400">· {sme.sme_title}</span>
-                    {sme.is_registered && <span className="text-xs text-green-600">✓ Registered</span>}
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => { setEditingSmeIdx(i); setEditSmeName(sme.sme_name); setEditSmeTitle(sme.sme_title); }}
-                          className="text-[10px] text-gray-400 hover:text-amber-700"
-                        >Edit</button>
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`Remove ${sme.sme_name} from this quiz?`)) return;
-                            try {
-                              await removeSme({ quizId, smeName: sme.sme_name });
-                              toast.success(`Removed ${sme.sme_name}`);
-                              refetch();
-                            } catch (err) { toast.error("Failed to remove"); }
-                          }}
-                          className="text-[10px] text-gray-400 hover:text-red-600"
-                        >Remove</button>
-                      </>
-                    )}
+                    <button
+                      onClick={() => {
+                        setSmeEditMode(true);
+                        setEditedSmes(data.smes.map(s => ({ name: s.sme_name, title: s.sme_title, original: s.sme_name })));
+                      }}
+                      className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 font-medium text-gray-600"
+                    >✏️ Edit</button>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/audit`;
+                        navigator.clipboard.writeText(url);
+                        toast.success("Audit registration link copied! Share it with the SME via Slack.");
+                      }}
+                      className="text-xs px-3 py-1 border border-indigo-200 rounded hover:bg-indigo-50 font-medium text-indigo-600"
+                    >📋 Invite an SME</button>
                   </>
                 )}
               </div>
-            ))}
-
-            {/* Add SME + Invite */}
-            <div className="ml-4 mt-2 flex items-center gap-3">
-              {!showAddSme ? (
-                <button onClick={() => setShowAddSme(true)} className="text-xs text-amber-700 hover:text-amber-800 font-medium">
-                  + Add SME
-                </button>
-              ) : (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input type="text" value={newSmeName} onChange={(e) => setNewSmeName(e.target.value)} placeholder="Name" className="px-2 py-1 border border-gray-300 rounded text-xs w-40 focus:ring-1 focus:ring-amber-500 outline-none" />
-                  <input type="text" value={newSmeTitle} onChange={(e) => setNewSmeTitle(e.target.value)} placeholder="Role / Title" className="px-2 py-1 border border-gray-300 rounded text-xs w-56 focus:ring-1 focus:ring-amber-500 outline-none" />
-                  <button
-                    onClick={async () => {
-                      if (!newSmeName.trim() || !newSmeTitle.trim()) return;
-                      try {
-                        await addSme({ quizId, quizTopic, smeName: newSmeName.trim(), smeTitle: newSmeTitle.trim() });
-                        toast.success(`Added ${newSmeName.trim()}`);
-                        setNewSmeName(""); setNewSmeTitle(""); setShowAddSme(false);
-                        refetch();
-                      } catch (err) {
-                        const msg = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : String(err);
-                        toast.error("Failed: " + msg);
-                      }
-                    }}
-                    disabled={addingSme || !newSmeName.trim() || !newSmeTitle.trim()}
-                    className="text-xs px-3 py-1 bg-amber-700 text-white rounded hover:bg-amber-800 disabled:opacity-50"
-                  >{addingSme ? "..." : "Add"}</button>
-                  <button onClick={() => { setShowAddSme(false); setNewSmeName(""); setNewSmeTitle(""); }} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  const url = `${window.location.origin}/audit`;
-                  navigator.clipboard.writeText(url);
-                  toast.success("Audit registration link copied! Share it with the SME via Slack.");
-                }}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-              >
-                📋 Invite an SME
-              </button>
             </div>
+
+            {smeEditMode ? (
+              /* Edit mode — input rows with x to remove */
+              <div className="space-y-2">
+                {editedSmes.map((es, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input value={es.name} onChange={(e) => { const copy = [...editedSmes]; copy[i] = { ...copy[i], name: e.target.value }; setEditedSmes(copy); }} className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-500" />
+                    <input value={es.title} onChange={(e) => { const copy = [...editedSmes]; copy[i] = { ...copy[i], title: e.target.value }; setEditedSmes(copy); }} className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-500" />
+                    <button
+                      onClick={async () => {
+                        try {
+                          await removeSme({ quizId, smeName: es.original });
+                          setEditedSmes(editedSmes.filter((_, j) => j !== i));
+                          toast.success(`Removed ${es.name}`);
+                          refetch();
+                        } catch (err) { toast.error("Failed to remove"); }
+                      }}
+                      className="text-red-400 hover:text-red-600 text-lg leading-none px-1"
+                    >×</button>
+                  </div>
+                ))}
+                {/* Add new row */}
+                <div className="flex items-center gap-2">
+                  <input value={newSmeName} onChange={(e) => setNewSmeName(e.target.value)} placeholder="New SME name" className="flex-1 px-3 py-1.5 border border-dashed border-gray-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-500" />
+                  <input value={newSmeTitle} onChange={(e) => setNewSmeTitle(e.target.value)} placeholder="Role / Title" className="flex-1 px-3 py-1.5 border border-dashed border-gray-300 rounded text-sm outline-none focus:ring-1 focus:ring-amber-500" />
+                  <span className="text-lg px-1 text-transparent">×</span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!newSmeName.trim() || !newSmeTitle.trim()) return;
+                    setEditedSmes([...editedSmes, { name: newSmeName.trim(), title: newSmeTitle.trim(), original: "" }]);
+                    setNewSmeName(""); setNewSmeTitle("");
+                  }}
+                  className="text-xs text-amber-700 hover:text-amber-800 font-medium"
+                >+ Add SME</button>
+              </div>
+            ) : (
+              /* Read-only mode — clean list */
+              <div className="space-y-1">
+                {data.smes.map((sme, i) => (
+                  <div key={i} className="ml-4">
+                    <span className="font-medium">{sme.sme_name}</span>
+                    <span className="text-gray-400"> · {sme.sme_title}</span>
+                    {sme.is_registered && <span className="ml-2 text-xs text-green-600">✓ Registered</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
