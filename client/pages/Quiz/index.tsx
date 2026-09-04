@@ -4,7 +4,7 @@ import { useApi } from "@/hooks/useApi.js";
 import { useApiData } from "@/hooks/useApiData.js";
 import { executeApi } from "@/lib/executeApi.js";
 import { useSuperblocksUser } from "@superblocksteam/library";
-import { QUIZZES, getQuizById, QUIZ_EMOJIS } from "@/data/quizzes/index.js";
+import { QUIZZES, QUIZ_EMOJIS } from "@/data/quizzes/index.js";
 import { PASS_THRESHOLD, TOTAL_TIME_SECONDS, MAX_ATTEMPTS, type Role } from "@/data/quiz-types.js";
 import type { Question } from "@/data/quiz-types.js";
 import QuestionCard from "@/components/quiz/QuestionCard.js";
@@ -14,6 +14,7 @@ import { useQuizTimer } from "@/components/quiz/QuizTimer.js";
 import { showXpToasts } from "@/components/camp/xp-toasts.js";
 import TierUnlockModal, { getTierIndex } from "@/components/camp/TierUnlockModal.js";
 import CampGear from "@/components/camp/CampGear.js";
+import { useQuizFromDb } from "@/hooks/useQuizFromDb.js";
 
 type QuizPhase = "intro" | "active" | "review" | "results";
 
@@ -22,7 +23,7 @@ export default function QuizPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isReviewMode = searchParams.get("mode") === "review";
-  const quiz = quizId ? getQuizById(quizId) : null;
+  const { quiz, loading: quizLoading } = useQuizFromDb(quizId);
 
   const [phase, setPhase] = useState<QuizPhase>("intro");
   const [role, setRole] = useState<Role | null>(null);

@@ -20,6 +20,18 @@ import CampGetQuizSnapshot from './camp/get-quiz-snapshot.js';
 import CampBackfillSnapshots from './camp/backfill-snapshots.js';
 import CampAddRegionColumn from './camp/add-region-column.js';
 import CampFixChrisRole from './camp/fix-chris-role.js';
+import AuditSetupTables from './audit/setup-audit-tables.js';
+import AuditSeedData from './audit/seed-audit-data.js';
+import AuditGetDashboard from './audit/get-audit-dashboard.js';
+import AuditRegisterSme from './audit/register-sme.js';
+import AuditGetQuizDetail from './audit/get-quiz-detail.js';
+import AuditSaveQuestionEdit from './audit/save-question-edit.js';
+import AuditAddNote from './audit/add-note.js';
+import AuditApproveQuestion from './audit/approve-question.js';
+import AuditReviewGear from './audit/review-gear.js';
+import AuditSignOff from './audit/sign-off.js';
+import AuditLookupSme from './audit/lookup-sme.js';
+import AuditGetQuizFromDb from './audit/get-quiz-from-db.js';
 
 const apis = {
   CampSetupTables,
@@ -41,6 +53,18 @@ const apis = {
   CampBackfillSnapshots,
   CampAddRegionColumn,
   CampFixChrisRole,
+  AuditSetupTables,
+  AuditSeedData,
+  AuditGetDashboard,
+  AuditRegisterSme,
+  AuditGetQuizDetail,
+  AuditSaveQuestionEdit,
+  AuditAddNote,
+  AuditApproveQuestion,
+  AuditReviewGear,
+  AuditSignOff,
+  AuditLookupSme,
+  AuditGetQuizFromDb,
 } as const;
 
 export default apis;
