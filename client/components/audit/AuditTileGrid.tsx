@@ -93,10 +93,10 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl overflow-hidden transition-all
+                text-left rounded-xl overflow-hidden transition-all shadow
                 ${canAccess
-                  ? "bg-white border border-gray-200 hover:shadow-lg hover:border-amber-400 cursor-pointer"
-                  : "bg-gray-50 border border-gray-100 opacity-75 cursor-default"}
+                  ? "bg-white hover:shadow-lg cursor-pointer"
+                  : "bg-gray-50 opacity-75 cursor-default"}
               `}
             >
               {/* ── 1. Header Bar ── */}
