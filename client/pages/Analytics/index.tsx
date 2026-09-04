@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { QUIZZES } from "@/data/quizzes/index.js";
 import { ALL_PATHS, getRolePathId, type PathId } from "@/data/paths.js";
@@ -11,7 +11,9 @@ type Tab = "dashboard" | "audit";
 
 export default function AnalyticsPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "audit" ? "audit" : "dashboard";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const { data, loading, isError, error } = useApiData("CampGetAnalytics", {
     quizId: null,
     role: null,

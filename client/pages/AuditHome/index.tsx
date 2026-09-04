@@ -97,7 +97,7 @@ export default function AuditHomePage() {
             ← Back to Analytics
           </a>
           <span className="text-gray-300">|</span>
-          <a href="/analytics" className="text-amber-700 hover:text-amber-900 font-medium">
+          <a href="/analytics?tab=audit" className="text-amber-700 hover:text-amber-900 font-medium">
             📊 Audit Progress Dashboard
           </a>
         </div>
