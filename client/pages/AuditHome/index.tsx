@@ -62,7 +62,7 @@ export default function AuditHomePage() {
                 <div>
                   <h1 className="text-2xl font-bold text-white">Welcome to the cAMP Quiz Audit</h1>
                   <p className="text-sm text-amber-100 mt-1">
-                    As a Subject Matter Expert, review quiz questions and resources assigned to you.
+                    As a Subject Matter Expert, review quiz questions, options, and correct answers assigned to you.
                     When you're satisfied, sign off at the bottom of each quiz.
                   </p>
                 </div>
@@ -93,7 +93,7 @@ export default function AuditHomePage() {
             each with quiz-based knowledge checks. Every new rep goes through Ascent in their first 4 weeks.
           </p>
           <p className="text-sm text-gray-600">
-            Your job as an SME is to verify the quiz questions, options, correct answers, and linked resources
+            Your job as an SME is to verify the quiz questions, options, and correct answers
             are accurate and current. Changes you make go <strong>live immediately</strong> for learners.
           </p>
         </div>

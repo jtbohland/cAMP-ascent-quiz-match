@@ -71,22 +71,24 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl overflow-hidden shadow-sm transition-all
+                relative text-left rounded-xl overflow-hidden shadow-sm transition-all
                 ${canAccess
                   ? "bg-white hover:shadow-md cursor-pointer"
                   : "bg-gray-50 opacity-60 cursor-not-allowed"}
               `}
             >
+              {/* Emoji — positioned top-left, overlapping header */}
+              <div className="absolute top-2 left-3 z-10 text-lg drop-shadow">
+                {emoji}
+              </div>
+
               {/* Dark orange header — day, title, progress */}
-              <div className="bg-amber-700 px-4 py-3">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{emoji}</span>
-                    <span className="text-xs font-bold text-amber-100 uppercase tracking-wide">
-                      {topic.day ?? topic.quiz_id}
-                    </span>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              <div className="bg-amber-700 pl-10 pr-4 pt-3 pb-3">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[11px] font-bold text-amber-200 uppercase tracking-wider">
+                    {topic.day ?? topic.quiz_id}
+                  </span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                     progress.pct === 100
                       ? "bg-green-100 text-green-700"
                       : progress.pct > 0
@@ -96,7 +98,7 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
                     {progress.label}
                   </span>
                 </div>
-                <h3 className="font-semibold text-white text-sm line-clamp-1">
+                <h3 className="font-bold text-white text-[13px] leading-tight line-clamp-1">
                   {topic.quiz_topic}
                 </h3>
               </div>
