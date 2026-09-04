@@ -8,6 +8,11 @@ interface Signoff {
   signed_at: string;
 }
 
+interface QuestionInfo {
+  question_index: number;
+  question_type: string;
+}
+
 interface Props {
   quizId: string;
   quizTopic: string;
@@ -17,6 +22,8 @@ interface Props {
   existingSignoffs: Signoff[];
   questionCount: number;
   approvedCount: number;
+  questions: QuestionInfo[];
+  approvedSet: Set<number>;
   onRefresh: () => void;
 }
 
@@ -29,6 +36,8 @@ export default function AuditSignOffSection({
   existingSignoffs,
   questionCount,
   approvedCount,
+  questions,
+  approvedSet,
   onRefresh,
 }: Props) {
   const [notes, setNotes] = useState("");
@@ -36,8 +45,10 @@ export default function AuditSignOffSection({
   const alreadySigned = existingSignoffs.some((s) => s.sme_name.toLowerCase() === smeName.toLowerCase());
   const canSignOff = allQuestionsApproved && !alreadySigned;
 
-  const sectionsNeeded: string[] = [];
-  if (!allQuestionsApproved) sectionsNeeded.push(`Questions (${approvedCount}/${questionCount} approved)`);
+  const typeLabel = (t: string) =>
+    t === "mc" ? "Multiple Choice" : t === "tf" ? "True or False" : t === "fill" ? "Fill in the Blank" : t === "match" ? "Matching" : t;
+
+  const unapprovedQuestions = questions.filter((q) => !approvedSet.has(q.question_index));
 
   const handleSignOff = useCallback(async () => {
     try {
@@ -59,12 +70,17 @@ export default function AuditSignOffSection({
       </p>
 
       {/* Sections still needing approval */}
-      {sectionsNeeded.length > 0 && (
+      {unapprovedQuestions.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-          <div className="text-sm font-medium text-red-700 mb-1">📋 Sections still need approval:</div>
-          <ul className="list-disc ml-5 text-sm text-red-600">
-            {sectionsNeeded.map((s) => (
-              <li key={s}>{s}</li>
+          <div className="text-sm font-medium text-red-700 mb-1">
+            📋 {unapprovedQuestions.length} of {questionCount} questions still need approval:
+          </div>
+          <ul className="list-disc ml-5 text-sm text-red-600 space-y-0.5">
+            {unapprovedQuestions.map((q) => (
+              <li key={q.question_index}>
+                <span className="font-medium">Question {q.question_index}</span>
+                <span className="text-red-400"> ({typeLabel(q.question_type)})</span>
+              </li>
             ))}
           </ul>
         </div>
@@ -104,7 +120,7 @@ export default function AuditSignOffSection({
 
           {/* Spekit reminder */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 text-sm text-purple-800">
-            <strong>🚨 Before you sign off</strong> — ask yourself: should any updates made today also be updated
+            <strong>🐙 Before you sign off</strong> — ask yourself: should any updates made today also be updated
             in <strong>Spekit</strong>? Changes to content, new resources, updated processes — if it lives in Spekit
             too, make sure both sources stay in sync.
           </div>

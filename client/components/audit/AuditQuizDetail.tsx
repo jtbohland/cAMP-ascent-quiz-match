@@ -211,6 +211,8 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
               smeName={smeName}
               smeEmail={smeEmail}
               isApproved={approvedSet.has(q.question_index)}
+              approvedCount={approvedSet.size}
+              questionCount={data.questions.length}
               edits={data.edits.filter((e) => e.question_id === q.question_index)}
               onRefresh={refetch}
             />
@@ -275,6 +277,8 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
           existingSignoffs={data.signoffs}
           questionCount={data.questions.length}
           approvedCount={approvedSet.size}
+          questions={data.questions}
+          approvedSet={approvedSet}
           onRefresh={refetch}
         />
       </div>

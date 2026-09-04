@@ -33,11 +33,13 @@ interface Props {
   smeName: string;
   smeEmail: string;
   isApproved: boolean;
+  approvedCount: number;
+  questionCount: number;
   edits: Edit[];
   onRefresh: () => void;
 }
 
-export default function AuditQuestionCard({ question, quizId, smeName, smeEmail, isApproved, edits, onRefresh }: Props) {
+export default function AuditQuestionCard({ question, quizId, smeName, smeEmail, isApproved, approvedCount, questionCount, edits, onRefresh }: Props) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(question.question_text);
   const [editOptions, setEditOptions] = useState<string[]>(
@@ -158,7 +160,9 @@ export default function AuditQuestionCard({ question, quizId, smeName, smeEmail,
             </button>
           )}
           {isApproved && (
-            <span className="text-xs text-green-600 font-medium">✅ Approved</span>
+            <span className="text-xs text-green-600 font-medium">
+              ✅ Approved · {approvedCount}/{questionCount}
+            </span>
           )}
         </div>
       </div>
