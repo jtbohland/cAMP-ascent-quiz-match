@@ -71,18 +71,18 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl border-2 p-4 transition-all
+                text-left rounded-xl overflow-hidden transition-all
                 ${canAccess
-                  ? "border-green-200 bg-white hover:border-green-400 hover:shadow-md cursor-pointer"
-                  : "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"}
+                  ? "bg-white border-2 border-green-200 hover:border-green-400 hover:shadow-md cursor-pointer"
+                  : "bg-gray-50 border-2 border-gray-200 opacity-60 cursor-not-allowed"}
                 ${progress.pct === 100 ? "border-green-400 bg-green-50" : ""}
               `}
             >
-              {/* Header bar */}
-              <div className="flex items-center justify-between mb-3">
+              {/* Dark orange header bar */}
+              <div className="bg-amber-700 px-4 py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{emoji}</span>
-                  <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+                  <span className="text-base">{emoji}</span>
+                  <span className="text-xs font-bold text-amber-100 uppercase tracking-wide">
                     {topic.day ?? topic.quiz_id}
                   </span>
                 </div>
@@ -90,20 +90,22 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
                   progress.pct === 100
                     ? "bg-green-100 text-green-700"
                     : progress.pct > 0
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-white/20 text-white"
                 }`}>
                   ● {progress.label}
                 </span>
               </div>
 
               {/* Title */}
-              <h3 className="font-semibold text-gray-900 text-sm mb-3 line-clamp-1">
-                {topic.quiz_topic}
-              </h3>
+              <div className="px-4 pt-3 pb-1">
+                <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">
+                  {topic.quiz_topic}
+                </h3>
+              </div>
 
               {/* Path tag + last activity */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="px-4 pb-2 flex items-center gap-2">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
                   {tag}
                 </span>
@@ -113,17 +115,23 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               </div>
 
               {/* SME names */}
-              <div className="text-xs text-gray-600 space-y-0.5">
-                {topic.smes.split("\n").map((sme, i) => (
-                  <div key={i} className={sme.toLowerCase().includes(currentSmeName.toLowerCase()) ? "font-semibold text-amber-700" : ""}>
-                    {sme}
-                  </div>
-                ))}
+              <div className="px-4 pb-4 text-xs text-gray-600 space-y-0.5">
+                {topic.smes.split("\n").map((sme, i) => {
+                  const [name, ...titleParts] = sme.split(" · ");
+                  const title = titleParts.join(" · ");
+                  const isCurrentUser = name.toLowerCase().trim() === currentSmeName.toLowerCase();
+                  return (
+                    <div key={i} className={isCurrentUser ? "text-amber-700" : ""}>
+                      <span className="font-semibold">{name}</span>
+                      {title && <span className="text-gray-400"> · {title}</span>}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Lock indicator for non-assigned */}
               {!canAccess && (
-                <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                <div className="px-4 pb-3 text-xs text-gray-400 flex items-center gap-1">
                   <span>🔒</span> Assigned to other SMEs
                 </div>
               )}
