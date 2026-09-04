@@ -131,8 +131,13 @@ export default function AuditQuestionCard({ question, quizId, smeName, smeEmail,
           <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             Q{question.question_index}
           </span>
-          <span className="text-xs text-gray-400 uppercase">{question.question_type}</span>
-          {question.lo && <span className="text-xs text-gray-400">{question.lo}</span>}
+          <span className="text-xs text-gray-400">
+            {question.question_type === "mc" ? "Multiple Choice"
+              : question.question_type === "tf" ? "True or False"
+              : question.question_type === "fill" ? "Fill in the Blank"
+              : question.question_type === "match" ? "Matching"
+              : question.question_type}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {!editing && !isApproved && (

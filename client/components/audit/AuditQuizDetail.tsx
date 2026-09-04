@@ -17,6 +17,10 @@ interface Props {
 
 export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, isAdmin, onBack }: Props) {
   const { data, loading, fetching, isError, error, refetch } = useApiData("AuditGetQuizDetail", { quizId });
+  const { run: addSme, loading: addingSme } = useApi("AuditAddSme");
+  const [showAddSme, setShowAddSme] = useState(false);
+  const [newSmeName, setNewSmeName] = useState("");
+  const [newSmeTitle, setNewSmeTitle] = useState("");
 
   if (loading) {
     return (
@@ -68,7 +72,17 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
         {/* Quiz header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
           <h1 className="text-xl font-bold text-gray-900 mb-1">{quizTopic}</h1>
-          <p className="text-sm text-gray-500 mb-3">Quiz ID: {quizId} · {data.questions.length} questions</p>
+          <p className="text-sm text-gray-500 mb-3">
+            {data.questions.length > 0 && (() => {
+              const types: Record<string, number> = {};
+              data.questions.forEach((q) => {
+                const label = q.question_type === "mc" ? "MC" : q.question_type === "tf" ? "TF" : q.question_type === "fill" ? "Fill" : q.question_type === "match" ? "Matching" : q.question_type;
+                types[label] = (types[label] ?? 0) + 1;
+              });
+              const breakdown = Object.entries(types).map(([t, c]) => `${c} ${t}`).join(", ");
+              return `${data.questions.length} questions — ${breakdown}`;
+            })()}
+          </p>
 
           {/* SMEs */}
           <div className="text-sm text-gray-600">
@@ -80,6 +94,59 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
                 {sme.is_registered && <span className="ml-2 text-xs text-green-600">✓ Registered</span>}
               </div>
             ))}
+
+            {/* Add SME */}
+            {!showAddSme ? (
+              <button
+                onClick={() => setShowAddSme(true)}
+                className="ml-4 mt-2 text-xs text-amber-700 hover:text-amber-800 font-medium"
+              >
+                + Add SME
+              </button>
+            ) : (
+              <div className="ml-4 mt-2 flex items-center gap-2 flex-wrap">
+                <input
+                  type="text"
+                  value={newSmeName}
+                  onChange={(e) => setNewSmeName(e.target.value)}
+                  placeholder="Name"
+                  className="px-2 py-1 border border-gray-300 rounded text-xs w-40 focus:ring-1 focus:ring-amber-500 outline-none"
+                />
+                <input
+                  type="text"
+                  value={newSmeTitle}
+                  onChange={(e) => setNewSmeTitle(e.target.value)}
+                  placeholder="Role / Title"
+                  className="px-2 py-1 border border-gray-300 rounded text-xs w-56 focus:ring-1 focus:ring-amber-500 outline-none"
+                />
+                <button
+                  onClick={async () => {
+                    if (!newSmeName.trim() || !newSmeTitle.trim()) return;
+                    try {
+                      await addSme({ quizId, quizTopic, smeName: newSmeName.trim(), smeTitle: newSmeTitle.trim() });
+                      toast.success(`Added ${newSmeName.trim()}`);
+                      setNewSmeName("");
+                      setNewSmeTitle("");
+                      setShowAddSme(false);
+                      refetch();
+                    } catch (err) {
+                      const msg = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : String(err);
+                      toast.error("Failed: " + msg);
+                    }
+                  }}
+                  disabled={addingSme || !newSmeName.trim() || !newSmeTitle.trim()}
+                  className="text-xs px-3 py-1 bg-amber-700 text-white rounded hover:bg-amber-800 disabled:opacity-50"
+                >
+                  {addingSme ? "..." : "Add"}
+                </button>
+                <button
+                  onClick={() => { setShowAddSme(false); setNewSmeName(""); setNewSmeTitle(""); }}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -115,20 +182,37 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
         {data.edits.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">📋 Change History</h2>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {data.edits.map((edit) => (
-                <div key={edit.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-amber-800">👤 {edit.sme_name}</span>
-                    <span className="text-gray-400 text-xs">
-                      {new Date(edit.created_at).toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })}
-                    </span>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {data.edits.map((edit) => {
+                const fieldLabel = edit.field_changed === "question_text" ? "Question Text"
+                  : edit.field_changed === "options" ? "Answer Options"
+                  : edit.field_changed === "correct_answer" ? "Correct Answer"
+                  : edit.field_changed === "explanation" ? "Explanation"
+                  : edit.field_changed;
+                return (
+                  <div key={edit.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-amber-800">👤 {edit.sme_name}</span>
+                      <span className="text-gray-400 text-xs">
+                        {new Date(edit.created_at).toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })}
+                      </span>
+                      <span className="text-xs text-gray-500">· Q{edit.question_id} · {fieldLabel}</span>
+                    </div>
+                    {edit.old_value && (
+                      <div className="mb-1">
+                        <span className="text-xs font-medium text-red-500">Before:</span>
+                        <p className="text-xs text-gray-600 line-clamp-2 pl-2 border-l-2 border-red-200">{edit.old_value}</p>
+                      </div>
+                    )}
+                    {edit.new_value && (
+                      <div>
+                        <span className="text-xs font-medium text-green-600">After:</span>
+                        <p className="text-xs text-gray-700 line-clamp-2 pl-2 border-l-2 border-green-300">{edit.new_value}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-gray-700">
-                    Changed <strong>{edit.field_changed}</strong> on Q{edit.question_id}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

@@ -33,6 +33,7 @@ import AuditSignOff from './audit/sign-off.js';
 import AuditLookupSme from './audit/lookup-sme.js';
 import AuditGetQuizFromDb from './audit/get-quiz-from-db.js';
 import AuditSeedAllData from './audit/seed-all-data.js';
+import AuditAddSme from './audit/add-sme.js';
 
 const apis = {
   CampSetupTables,
@@ -67,6 +68,7 @@ const apis = {
   AuditLookupSme,
   AuditGetQuizFromDb,
   AuditSeedAllData,
+  AuditAddSme,
 } as const;
 
 export default apis;
