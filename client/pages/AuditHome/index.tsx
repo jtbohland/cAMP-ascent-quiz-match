@@ -74,6 +74,19 @@ export default function AuditHomePage() {
         </div>
       </header>
 
+      {/* Admin-only nav links */}
+      {isAdmin && (
+        <div className="max-w-6xl mx-auto px-6 pt-3 flex items-center gap-4 text-sm">
+          <a href="/analytics" className="text-amber-700 hover:text-amber-900 font-medium">
+            ← Back to Analytics
+          </a>
+          <span className="text-gray-300">|</span>
+          <a href="/analytics" className="text-amber-700 hover:text-amber-900 font-medium">
+            📊 Audit Progress Dashboard
+          </a>
+        </div>
+      )}
+
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Welcome box — mirrors Ascent layout */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
