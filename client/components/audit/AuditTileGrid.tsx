@@ -93,15 +93,15 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl overflow-hidden transition-all shadow
+                text-left rounded-xl transition-all shadow
                 ${canAccess
-                  ? "bg-white hover:shadow-lg cursor-pointer"
-                  : "bg-gray-50 opacity-75 cursor-default"}
+                  ? "hover:shadow-lg cursor-pointer"
+                  : "opacity-75 cursor-default"}
               `}
+              style={{ backgroundColor: "#b45309" }}
             >
-              {/* ── 1. Header Bar ── */}
-              <div className="bg-amber-700 px-4 py-2.5 flex items-center justify-between gap-2">
-                {/* Left: emoji + text stack */}
+              {/* ── 1. Header Bar — sits on amber-700 button bg ── */}
+              <div className="px-4 py-2.5 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-lg flex-shrink-0">{emoji}</span>
                   <div className="min-w-0">
@@ -113,15 +113,14 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
                     </div>
                   </div>
                 </div>
-                {/* Right: status pill */}
                 <span className={`flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusPill}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
                   {progress.label}
                 </span>
               </div>
 
-              {/* ── 2. Body ── */}
-              <div className="px-4 py-3 flex flex-col gap-2">
+              {/* ── 2. Body — white with rounded bottom corners ── */}
+              <div className="bg-white rounded-b-xl px-4 py-3 flex flex-col gap-2">
                 {/* Pills row */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
