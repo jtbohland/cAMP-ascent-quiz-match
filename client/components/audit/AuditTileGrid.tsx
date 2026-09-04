@@ -71,14 +71,14 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
               disabled={!canAccess}
               className={`
-                text-left rounded-xl overflow-hidden shadow-sm transition-all
+                text-left rounded-xl shadow-sm transition-all bg-amber-700
                 ${canAccess
-                  ? "bg-white hover:shadow-md cursor-pointer"
-                  : "bg-gray-50 opacity-60 cursor-not-allowed"}
+                  ? "hover:shadow-md cursor-pointer"
+                  : "opacity-60 cursor-not-allowed"}
               `}
             >
-              {/* Dark orange header — emoji, day, title, progress */}
-              <div className="bg-amber-700 px-4 pt-2.5 pb-2.5">
+              {/* Header — lives on the amber-700 card background */}
+              <div className="px-4 pt-2.5 pb-2.5">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{emoji}</span>
@@ -101,35 +101,37 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
                 </h3>
               </div>
 
-              {/* Body — tag, activity, SMEs */}
-              <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
-                  {tag}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {formatLastActivity(topic.last_activity)}
-                </span>
-              </div>
-
-              <div className="px-4 pb-4 text-xs text-gray-600 space-y-0.5">
-                {topic.smes.split("\n").map((sme, i) => {
-                  const [name, ...titleParts] = sme.split(" · ");
-                  const title = titleParts.join(" · ");
-                  const isCurrentUser = name.toLowerCase().trim() === currentSmeName.toLowerCase();
-                  return (
-                    <div key={i} className={isCurrentUser ? "text-amber-700" : ""}>
-                      <span className="font-semibold">{name}</span>
-                      {title && <span className="text-gray-400"> · {title}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {!canAccess && (
-                <div className="px-4 pb-3 text-xs text-gray-400 flex items-center gap-1">
-                  🔒 Assigned to other SMEs
+              {/* White body — tag, activity, SMEs */}
+              <div className="bg-white rounded-b-xl">
+                <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tagColors.bg} ${tagColors.text}`}>
+                    {tag}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {formatLastActivity(topic.last_activity)}
+                  </span>
                 </div>
-              )}
+
+                <div className="px-4 pb-4 text-xs text-gray-600 space-y-0.5">
+                  {topic.smes.split("\n").map((sme, i) => {
+                    const [name, ...titleParts] = sme.split(" · ");
+                    const title = titleParts.join(" · ");
+                    const isCurrentUser = name.toLowerCase().trim() === currentSmeName.toLowerCase();
+                    return (
+                      <div key={i} className={isCurrentUser ? "text-amber-700" : ""}>
+                        <span className="font-semibold">{name}</span>
+                        {title && <span className="text-gray-400"> · {title}</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!canAccess && (
+                  <div className="px-4 pb-3 text-xs text-gray-400 flex items-center gap-1">
+                    🔒 Assigned to other SMEs
+                  </div>
+                )}
+              </div>
             </button>
           );
         })}
