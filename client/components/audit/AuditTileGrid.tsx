@@ -88,12 +88,14 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
             : "bg-gray-400";
 
           return (
-            <button
+            <div
               key={topic.quiz_id}
+              role="button"
+              tabIndex={canAccess ? 0 : undefined}
               onClick={() => canAccess && onSelectTopic(topic.quiz_id)}
-              disabled={!canAccess}
+              onKeyDown={(e) => { if (canAccess && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onSelectTopic(topic.quiz_id); } }}
               className={`
-                text-left rounded-xl overflow-hidden transition-all shadow
+                rounded-xl overflow-hidden transition-all shadow
                 ${canAccess
                   ? "hover:shadow-lg cursor-pointer"
                   : "opacity-75 cursor-default"}
@@ -160,7 +162,7 @@ export default function AuditTileGrid({ topics, currentSmeName, isAdmin, onSelec
                   </div>
                 )}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
