@@ -1,8 +1,6 @@
 import { useState, useCallback } from "react";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
-import { CAMP_GEAR } from "@/data/camp-gear.js";
-import { RESOURCE_TYPE_BADGES } from "@/data/camp-gear.js";
 import { toast } from "sonner";
 import AuditQuestionCard from "./AuditQuestionCard.js";
 import AuditNotesThread from "./AuditNotesThread.js";
@@ -19,20 +17,6 @@ interface Props {
 
 export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, isAdmin, onBack }: Props) {
   const { data, loading, fetching, isError, error, refetch } = useApiData("AuditGetQuizDetail", { quizId });
-  const { run: reviewGear } = useApi("AuditReviewGear");
-
-  const gear = CAMP_GEAR[quizId] ?? [];
-  const reviewedLabels = new Set(data?.gearReviews.map((r) => r.gear_label) ?? []);
-
-  const handleGearReview = useCallback(async (gearLabel: string) => {
-    try {
-      await reviewGear({ quizId, gearLabel, reviewedBy: smeName });
-      await refetch();
-    } catch (err) {
-      const message = err && typeof err === "object" && "message" in err ? String((err as { message: unknown }).message) : String(err);
-      toast.error("Failed to mark gear reviewed: " + message);
-    }
-  }, [quizId, smeName, reviewGear, refetch]);
 
   if (loading) {
     return (
@@ -60,7 +44,6 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
 
   const approvedSet = new Set(data.approvals.map((a) => a.question_id));
   const allQuestionsApproved = data.questions.length > 0 && data.questions.every((q) => approvedSet.has(q.question_index));
-  const allGearReviewed = gear.length === 0 || gear.every((g) => reviewedLabels.has(g.label));
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -119,61 +102,6 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
           ))}
         </div>
 
-        {/* cAMP Gear */}
-        {gear.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                🎒 cAMP Gear — {quizTopic}{" "}
-                <span className="text-sm font-normal text-gray-500">
-                  ({reviewedLabels.size}/{gear.length} reviewed)
-                </span>
-              </h2>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800">
-              <strong>📋 SME Responsibility:</strong> Any changes needed to slides, decks, or docs linked below
-              are <strong>your responsibility</strong> — not the enablement team's. If you identify necessary
-              corrections, please fix them directly before approving this section.
-            </div>
-
-            <div className="space-y-3">
-              {gear.map((g) => {
-                const isReviewed = reviewedLabels.has(g.label);
-                const badge = RESOURCE_TYPE_BADGES[g.type];
-                return (
-                  <div key={g.label} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={isReviewed}
-                        onChange={() => !isReviewed && handleGearReview(g.label)}
-                        disabled={isReviewed}
-                        className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      {badge && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}>
-                          {badge.label}
-                        </span>
-                      )}
-                      <span className="text-sm">{g.emoji}</span>
-                      <a
-                        href={g.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {g.label}
-                      </a>
-                    </div>
-                    {isReviewed && <span className="text-xs text-green-600">✓ Reviewed</span>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Notes thread */}
         <AuditNotesThread
           quizId={quizId}
@@ -212,12 +140,9 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
           smeName={smeName}
           smeEmail={smeEmail}
           allQuestionsApproved={allQuestionsApproved}
-          allGearReviewed={allGearReviewed}
           existingSignoffs={data.signoffs}
           questionCount={data.questions.length}
           approvedCount={approvedSet.size}
-          gearCount={gear.length}
-          gearReviewedCount={reviewedLabels.size}
           onRefresh={refetch}
         />
       </div>

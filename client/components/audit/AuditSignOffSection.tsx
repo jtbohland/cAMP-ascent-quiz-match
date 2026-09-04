@@ -14,12 +14,9 @@ interface Props {
   smeName: string;
   smeEmail: string;
   allQuestionsApproved: boolean;
-  allGearReviewed: boolean;
   existingSignoffs: Signoff[];
   questionCount: number;
   approvedCount: number;
-  gearCount: number;
-  gearReviewedCount: number;
   onRefresh: () => void;
 }
 
@@ -29,22 +26,18 @@ export default function AuditSignOffSection({
   smeName,
   smeEmail,
   allQuestionsApproved,
-  allGearReviewed,
   existingSignoffs,
   questionCount,
   approvedCount,
-  gearCount,
-  gearReviewedCount,
   onRefresh,
 }: Props) {
   const [notes, setNotes] = useState("");
   const { run: signOff, loading } = useApi("AuditSignOff");
   const alreadySigned = existingSignoffs.some((s) => s.sme_name.toLowerCase() === smeName.toLowerCase());
-  const canSignOff = allQuestionsApproved && allGearReviewed && !alreadySigned;
+  const canSignOff = allQuestionsApproved && !alreadySigned;
 
   const sectionsNeeded: string[] = [];
   if (!allQuestionsApproved) sectionsNeeded.push(`Questions (${approvedCount}/${questionCount} approved)`);
-  if (!allGearReviewed && gearCount > 0) sectionsNeeded.push(`cAMP Gear (${gearReviewedCount}/${gearCount} reviewed)`);
 
   const handleSignOff = useCallback(async () => {
     try {
