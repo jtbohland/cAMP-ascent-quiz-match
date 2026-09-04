@@ -78,8 +78,9 @@ export default api({
         m.week,
         CASE
           WHEN s.quiz_id IN ('sdr-cold-calling') THEN 'SDR'
-          WHEN s.quiz_id IN ('day4-mktg', 'day14-roe', 'product-101') THEN 'Special'
-          ELSE 'AE / PSM / Renewals'
+          WHEN s.quiz_id IN ('day4-mktg') THEN 'SDR'
+          WHEN s.quiz_id IN ('day5', 'day11', 'day13', 'day14', 'day15') THEN 'AE / PSM / Renewals'
+          ELSE 'All Roles'
         END AS path_tag,
         s.smes,
         s.sme_count,
