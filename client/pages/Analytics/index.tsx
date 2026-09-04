@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { QUIZZES } from "@/data/quizzes/index.js";
 import { ALL_PATHS, getRolePathId, type PathId } from "@/data/paths.js";
 import CampersTable from "@/components/camp/CampersTable.js";
 import LeaderboardMini from "@/components/camp/LeaderboardMini.js";
+import AdminAuditTab from "@/components/audit/AdminAuditTab.js";
+
+type Tab = "dashboard" | "audit";
 
 export default function AnalyticsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "audit" ? "audit" : "dashboard";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const { data, loading, isError, error } = useApiData("CampGetAnalytics", {
     quizId: null,
     role: null,
@@ -25,8 +31,8 @@ export default function AnalyticsPage() {
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">📊 cAMP Ascent: Sales — Analytics</h1>
-              <p className="text-sm text-amber-100 mt-1">🏔️ Performance data across all knowledge checks</p>
+              <h1 className="text-2xl font-bold text-white">📊 Admin</h1>
+              <p className="text-sm text-amber-100 mt-1">Performance data across all learners and quizzes</p>
             </div>
             <button
               onClick={() => navigate("/")}
@@ -38,22 +44,54 @@ export default function AnalyticsPage() {
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="max-w-6xl mx-auto px-6 pt-4">
+        <div className="flex gap-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("dashboard")}
+            className={`pb-3 text-sm font-medium transition-colors ${
+              activeTab === "dashboard"
+                ? "text-amber-700 border-b-2 border-amber-700"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => setActiveTab("audit")}
+            className={`pb-3 text-sm font-medium transition-colors ${
+              activeTab === "audit"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            🍁 Ascent Audit
+          </button>
+        </div>
+      </div>
+
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {loading && <LoadingSkeleton />}
-        {isError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-            Failed to load analytics: {(error as { message?: string })?.message ?? "Unknown error"}
-          </div>
-        )}
-        {data && (
-          <AnalyticsDashboard
-            data={data}
-            visitStats={visitStats}
-            campers={campersData?.campers}
-            campersLoading={campersLoading}
-            leaderboard={leaderboardData?.leaderboard}
-            lbLoading={lbLoading}
-          />
+        {activeTab === "audit" ? (
+          <AdminAuditTab />
+        ) : (
+          <>
+            {loading && <LoadingSkeleton />}
+            {isError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+                Failed to load analytics: {(error as { message?: string })?.message ?? "Unknown error"}
+              </div>
+            )}
+            {data && (
+              <AnalyticsDashboard
+                data={data}
+                visitStats={visitStats}
+                campers={campersData?.campers}
+                campersLoading={campersLoading}
+                leaderboard={leaderboardData?.leaderboard}
+                lbLoading={lbLoading}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
