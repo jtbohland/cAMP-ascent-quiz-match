@@ -67,6 +67,7 @@ export const CAMP_GEAR: Record<string, CampResource[]> = {
     { type: "zoom", emoji: "🍿", label: "Reachdesk Session (44m)", url: "https://amplitude.zoom.us/clips/share/1HnN8co4TT-XfIREH0ZodQ?pageType=web" },
   ],
   day5: [
+    { type: "doc", emoji: "📚", label: "Customer Operating Cadence — Renewal Readiness & Deployment Reviews", url: "https://docs.google.com/document/d/1786rPB8C2VbeaPM9Lib8Qu8umYLHvS-u9-y0AODurbo/edit?tab=t.0" },
     { type: "spekit", emoji: "🐙", label: "Sales Operating Cadence & Manager Playbook (2026) — Renewals on pp. 10, 21, 27, 32, 33, 40", url: "https://docs.google.com/presentation/d/1CQLqFWy3M6JiprYlgNh8FelgJorPT-eZ_uvpg3F0IFE/edit?slide=id.ge0112cd95c_5_4#slide=id.ge0112cd95c_5_4" },
     { type: "spekit", emoji: "🐙", label: "2026 Sales Policy Handbook — Renewals on pp. 6, 7, 9, 22", url: "https://app.spekit.co/app/wiki/asset/817909a3-30d8-4b9b-9a35-d8c07150b365?type=asset&expanded=true" },
     { type: "doc", emoji: "📓", label: "Customer Engagement Model (CEM) — Renewal Motion (left panel)", url: "https://docs.google.com/document/d/1VxMWNbIWWEtJwuhNibKHUCsbOsCQqVFcin8vrZkeKZw/edit?tab=t.0#heading=h.k0bsvsa98x07" },
