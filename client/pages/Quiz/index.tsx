@@ -378,6 +378,7 @@ export default function QuizPage() {
     setCurrentIndex(0);
     setShowFeedback(false);
     setShuffleSeed(Date.now()); // Reshuffle questions for retry
+    timer.reset();  // Reset timer to full duration before starting
     timer.start();
   }, [timer]);
 
