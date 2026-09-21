@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
 import RegisterPage from "@/pages/Register/index.js";
+import AuditHomePage from "@/pages/AuditHome/index.js";
 
 const ADMIN_EMAILS = ["jt.bohland@amplitude.com"];
 
@@ -12,6 +13,7 @@ export default function RegistrationGate() {
   const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
 
   const [justRegistered, setJustRegistered] = useState(false);
+  const [smeMode, setSmeMode] = useState(false);
 
   const { data, loading } = useApiData(
     "CampLookupViewer",
@@ -23,9 +25,9 @@ export default function RegistrationGate() {
     setJustRegistered(true);
   }, []);
 
-  // Admins bypass
+  // Admins bypass — show normal app (they access audit from Analytics tab or /audit)
   if (isAdmin) {
-    return <Outlet />;
+    return smeMode ? <AuditHomePage /> : <Outlet />;
   }
 
   // Still loading lookup
@@ -40,11 +42,21 @@ export default function RegistrationGate() {
     );
   }
 
-  // Not registered — show registration form
-  if (!data?.isRegistered && !justRegistered) {
-    return <RegisterPage onComplete={handleRegistrationComplete} />;
+  // SME mode — render the audit page directly, no routing needed
+  if (smeMode) {
+    return <AuditHomePage />;
   }
 
-  // Registered — show the app
+  // Not registered as camper — show registration form with SME option
+  if (!data?.isRegistered && !justRegistered) {
+    return (
+      <RegisterPage
+        onComplete={handleRegistrationComplete}
+        onSmeMode={() => setSmeMode(true)}
+      />
+    );
+  }
+
+  // Registered camper — show the app
   return <Outlet />;
 }
