@@ -68,9 +68,9 @@ export default function AuditHomePage() {
             {isAdmin && (
               <button
                 onClick={() => {
-                  const url = `${window.location.origin}/audit`;
+                  const url = window.location.origin;
                   navigator.clipboard.writeText(url);
-                  toast.success("Audit link copied! Share it with SMEs via Slack.");
+                  toast.success("App link copied! Tell SMEs to click 'I'm an SME' on the registration page.");
                 }}
                 className="text-xs px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors"
               >
