@@ -11,23 +11,24 @@ export default function RegistrationGate() {
   const userEmail = user?.email ?? "";
   const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
   const location = useLocation();
-
-  // Audit route has its own registration gate — skip the camper gate
-  if (location.pathname.startsWith("/audit")) {
-    return <Outlet />;
-  }
+  const isAuditRoute = location.pathname.startsWith("/audit");
 
   const [justRegistered, setJustRegistered] = useState(false);
 
   const { data, loading } = useApiData(
     "CampLookupViewer",
     { userEmail },
-    { enabled: !!userEmail && !isAdmin }
+    { enabled: !!userEmail && !isAdmin && !isAuditRoute }
   );
 
   const handleRegistrationComplete = useCallback(() => {
     setJustRegistered(true);
   }, []);
+
+  // Audit route has its own registration gate — skip the camper gate entirely
+  if (isAuditRoute) {
+    return <Outlet />;
+  }
 
   // Admins bypass
   if (isAdmin) {
