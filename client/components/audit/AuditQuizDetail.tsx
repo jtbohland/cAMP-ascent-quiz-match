@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import AuditQuestionCard from "./AuditQuestionCard.js";
 import AuditNotesThread from "./AuditNotesThread.js";
 import AuditSignOffSection from "./AuditSignOffSection.js";
+import { exportQuizToDocx } from "@/lib/export-quiz-docx.js";
 
 interface Props {
   quizId: string;
@@ -75,7 +76,23 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
 
         {/* Quiz header */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-start justify-between">
           <h1 className="text-xl font-bold text-gray-900 mb-1">{quizTopic}</h1>
+          <button
+            onClick={async () => {
+              try {
+                const dayLabel = quizId.startsWith("day") ? `Day ${quizId.replace("day", "")}` : quizId;
+                await exportQuizToDocx(quizId, quizTopic, dayLabel, data.questions);
+                toast.success("Quiz downloaded as .docx!");
+              } catch (err) {
+                toast.error("Failed to generate document");
+              }
+            }}
+            className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-gray-600 flex items-center gap-1 shrink-0"
+          >
+            📄 Download .docx
+          </button>
+          </div>
           <p className="text-sm text-gray-500 mb-3">
             {data.questions.length > 0 && (() => {
               const types: Record<string, number> = {};
