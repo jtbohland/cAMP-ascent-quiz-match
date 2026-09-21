@@ -137,9 +137,9 @@ export default function AuditQuizDetail({ quizId, quizTopic, smeName, smeEmail, 
                     >✏️ Edit</button>
                     <button
                       onClick={() => {
-                        const url = `${window.location.origin}/audit`;
+                        const url = window.location.origin;
                         navigator.clipboard.writeText(url);
-                        toast.success("Audit registration link copied! Share it with the SME via Slack.");
+                        toast.success("App link copied! Tell the SME to click 'I'm an SME' on the registration page.");
                       }}
                       className="text-xs px-3 py-1 border border-indigo-200 rounded hover:bg-indigo-50 font-medium text-indigo-600"
                     >📋 Invite an SME</button>
