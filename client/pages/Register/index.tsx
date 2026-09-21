@@ -49,7 +49,7 @@ const MANAGERS = [
   "Tansu Yegen",
 ] as const;
 
-export default function RegisterPage({ onComplete }: { onComplete: () => void }) {
+export default function RegisterPage({ onComplete, onSmeMode }: { onComplete: () => void; onSmeMode?: () => void }) {
   const user = useSuperblocksUser();
   const { run: register, loading } = useApi("CampRegisterViewer");
 
@@ -218,6 +218,18 @@ export default function RegisterPage({ onComplete }: { onComplete: () => void })
           >
             {loading ? "Registering..." : "⛰️ Start My Ascent"}
           </button>
+
+          {/* SME Audit link */}
+          {onSmeMode && (
+            <div className="pt-3 border-t border-gray-100 text-center">
+              <button
+                onClick={onSmeMode}
+                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                🦉 I'm an SME — here to audit quiz content
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

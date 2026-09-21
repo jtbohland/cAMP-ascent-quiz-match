@@ -3,25 +3,8 @@ import { createBrowserRouter } from "react-router";
 import { PageNotFound, RouteLoadError } from "@superblocksteam/library";
 
 import RegisteredApp from "./App.js";
-import AuditAppShell from "./AuditApp.js";
 
 export const router = createBrowserRouter([
-  // Audit route — separate shell, no camper RegistrationGate
-  {
-    Component: AuditAppShell,
-    errorElement: <RouteLoadError />,
-    children: [
-      {
-        path: "/audit",
-        lazy: () =>
-          import("./pages/AuditHome/index.js").then((mod) => {
-            const Component = mod.default;
-            return { Component };
-          }),
-      },
-    ],
-  },
-  // Main app — camper routes with RegistrationGate
   {
     Component: RegisteredApp,
     errorElement: <RouteLoadError />,
@@ -63,6 +46,14 @@ export const router = createBrowserRouter([
         path: "/xp",
         lazy: () =>
           import("./pages/XpExplainer/index.js").then((mod) => {
+            const Component = mod.default;
+            return { Component };
+          }),
+      },
+      {
+        path: "/audit",
+        lazy: () =>
+          import("./pages/AuditHome/index.js").then((mod) => {
             const Component = mod.default;
             return { Component };
           }),
