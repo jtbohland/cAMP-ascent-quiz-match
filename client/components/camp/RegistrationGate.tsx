@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet } from "react-router";
 import { useSuperblocksUser } from "@superblocksteam/library";
 import { useApiData } from "@/hooks/useApiData.js";
 import RegisterPage from "@/pages/Register/index.js";
@@ -10,25 +10,18 @@ export default function RegistrationGate() {
   const user = useSuperblocksUser();
   const userEmail = user?.email ?? "";
   const isAdmin = ADMIN_EMAILS.includes(userEmail.toLowerCase());
-  const location = useLocation();
-  const isAuditRoute = location.pathname.startsWith("/audit");
 
   const [justRegistered, setJustRegistered] = useState(false);
 
   const { data, loading } = useApiData(
     "CampLookupViewer",
     { userEmail },
-    { enabled: !!userEmail && !isAdmin && !isAuditRoute }
+    { enabled: !!userEmail && !isAdmin }
   );
 
   const handleRegistrationComplete = useCallback(() => {
     setJustRegistered(true);
   }, []);
-
-  // Audit route has its own registration gate — skip the camper gate entirely
-  if (isAuditRoute) {
-    return <Outlet />;
-  }
 
   // Admins bypass
   if (isAdmin) {
