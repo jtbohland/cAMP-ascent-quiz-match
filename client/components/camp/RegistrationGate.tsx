@@ -30,6 +30,11 @@ export default function RegistrationGate() {
     return smeMode ? <AuditHomePage /> : <Outlet />;
   }
 
+  // SME mode — render the audit page directly, no routing needed
+  if (smeMode) {
+    return <AuditHomePage />;
+  }
+
   // Still loading lookup
   if (loading || !userEmail) {
     return (
@@ -37,14 +42,15 @@ export default function RegistrationGate() {
         <div className="text-center">
           <div className="text-4xl mb-3 animate-bounce">⛰️</div>
           <p className="text-amber-700 font-medium">Loading your trail...</p>
+          <button
+            onClick={() => setSmeMode(true)}
+            className="mt-6 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            🦉 I'm an SME — here to audit quiz content
+          </button>
         </div>
       </div>
     );
-  }
-
-  // SME mode — render the audit page directly, no routing needed
-  if (smeMode) {
-    return <AuditHomePage />;
   }
 
   // Not registered as camper — show registration form with SME option
