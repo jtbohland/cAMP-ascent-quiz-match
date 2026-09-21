@@ -52,6 +52,7 @@ export default function AuditQuestionCard({ question, quizId, smeName, smeEmail,
   const { run: approveQuestion, loading: approving } = useApi("AuditApproveQuestion");
 
   const options = Array.isArray(question.options) ? (question.options as string[]) : [];
+  const pairs = Array.isArray(question.pairs) ? (question.pairs as Array<{ term: string; match: string }>) : [];
   const correctAnswer = question.correct_answer;
 
   const handleSave = useCallback(async () => {
@@ -220,6 +221,36 @@ export default function AuditQuestionCard({ question, quizId, smeName, smeEmail,
                   </div>
                 );
               })}
+        </div>
+      )}
+
+      {/* Matching pairs */}
+      {pairs.length > 0 && !editing && (
+        <div className="space-y-2 mb-3">
+          <div className="text-xs font-medium text-gray-500 mb-1">Match pairs:</div>
+          {pairs.map((p, i) => (
+            <div key={i} className="flex items-start gap-2 text-xs">
+              <span className="font-semibold text-gray-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 min-w-[120px]">
+                {p.term}
+              </span>
+              <span className="text-gray-400 mt-1">→</span>
+              <span className="text-gray-700 bg-green-50 border border-green-200 rounded px-2 py-1 flex-1">
+                {p.match}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Fill in the blank answer */}
+      {question.question_type === "fill" && !editing && (
+        <div className="mb-3">
+          <div className="text-xs font-medium text-gray-500 mb-1">Accepted answers:</div>
+          <div className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            {Array.isArray(question.correct_answer)
+              ? (question.correct_answer as string[]).join("  /  ")
+              : String(question.correct_answer ?? "")}
+          </div>
         </div>
       )}
 

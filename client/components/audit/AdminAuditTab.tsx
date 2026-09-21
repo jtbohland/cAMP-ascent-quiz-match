@@ -105,8 +105,9 @@ export default function AdminAuditTab() {
                 {/* SMEs — compact list */}
                 <div className="space-y-0.5">
                   {topic.smes.split("\n").map((sme, i) => {
-                    const name = sme.split(" · ")[0];
-                    const isRegistered = topic.registered_count > i;
+                    const parts = sme.split(" · ");
+                    const name = parts[0];
+                    const isRegistered = parts[parts.length - 1] === "1";
                     return (
                       <div key={i} className="text-xs flex items-center gap-1">
                         <span className="text-gray-700">{name}</span>

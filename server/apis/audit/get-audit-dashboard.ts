@@ -32,7 +32,7 @@ export default api({
     const topics = await ctx.integrations.apps_db.query(
       `WITH sme_agg AS (
         SELECT quiz_id, quiz_topic,
-          STRING_AGG(sme_name || ' · ' || sme_title, '\n' ORDER BY sme_name) AS smes,
+          STRING_AGG(sme_name || ' · ' || sme_title || ' · ' || CASE WHEN is_registered THEN '1' ELSE '0' END, '\n' ORDER BY sme_name) AS smes,
           COUNT(*) AS sme_count,
           COUNT(*) FILTER (WHERE is_registered) AS registered_count
         FROM camp_quiz_audit_smes
